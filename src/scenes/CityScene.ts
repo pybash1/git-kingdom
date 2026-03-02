@@ -1338,13 +1338,12 @@ export class CityScene extends Phaser.Scene {
     avatarEl.onerror = () => { avatarEl.style.display = 'none'; };
 
     document.getElementById('info-name')!.innerHTML =
-      (isUser ? '★ ' : '') + icon + ' ' +
-      `<a class="gh-link" href="https://github.com/${citizen.login}" target="_blank">${citizen.login}</a>`;
+      (isUser ? '★ ' : '') + icon + ' ' + ghLink(citizen.login);
     document.getElementById('info-tier')!.textContent =
       `${title} of the ${this.city.language} Kingdom`;
 
     const repoLinks = citizen.repos.map((r: string) =>
-      `<a class="gh-link" href="https://github.com/${r}" target="_blank">${r.split('/').pop()}</a>`
+      ghLink(r, r.split('/').pop() || r)
     ).join(', ');
     const stats = [
       stat('Contributions', citizen.totalContributions.toLocaleString()),
@@ -1388,7 +1387,7 @@ export class CityScene extends Phaser.Scene {
 
     const rankLabel = b.rank.charAt(0).toUpperCase() + b.rank.slice(1);
     document.getElementById('info-name')!.innerHTML =
-      (isUserRepo ? '★ ' : '') + `<a class="gh-link" href="https://github.com/${repo.full_name}" target="_blank">${repo.full_name}</a>`;
+      (isUserRepo ? '★ ' : '') + ghLink(repo.full_name);
     document.getElementById('info-tier')!.textContent =
       `${RANK_ICONS[b.rank]} ${rankLabel} in the ${this.city.language} Kingdom`;
 
@@ -1399,7 +1398,7 @@ export class CityScene extends Phaser.Scene {
     const maxIssues = Math.max(...repoBuildings.map(bb => bb.repoMetrics!.repo.open_issues_count), 1);
 
     const stats = [];
-    if (repo.description) stats.push(stat('', repo.description));
+    if (repo.description) stats.push(stat('', esc(repo.description)));
     stats.push('<hr class="golden">');
     stats.push(
       statBar('Stars', repo.stargazers_count, maxStars, 'orange'),
@@ -1423,7 +1422,7 @@ export class CityScene extends Phaser.Scene {
     const kingEl = document.getElementById('info-king')!;
     const mayor = b.repoMetrics.king;
     kingEl.innerHTML = mayor
-      ? `🏛 Owner: <a class="gh-link citizen-link" href="#" data-login="${mayor.login}">${mayor.login}</a> (${mayor.contributions.toLocaleString()} commits)`
+      ? `🏛 Owner: ${citizenLink(mayor.login)} (${mayor.contributions.toLocaleString()} commits)`
       : '';
 
     // Wire up citizen links — clicking a user opens their citizen card
@@ -1464,13 +1463,12 @@ export class CityScene extends Phaser.Scene {
     avatarEl.onerror = () => { avatarEl.style.display = 'none'; };
 
     document.getElementById('info-name')!.innerHTML =
-      icon + ' ' +
-      `<a class="gh-link" href="https://github.com/${citizen.login}" target="_blank">${citizen.login}</a>`;
+      icon + ' ' + ghLink(citizen.login);
     document.getElementById('info-tier')!.textContent =
       `${title} of the ${this.city.language} Kingdom`;
 
     const repoLinks = citizen.repos.map((r: string) =>
-      `<a class="gh-link" href="https://github.com/${r}" target="_blank">${r.split('/').pop()}</a>`
+      ghLink(r, r.split('/').pop() || r)
     ).join(', ');
     const stats = [
       stat('Contributions', citizen.totalContributions.toLocaleString()),
@@ -1571,9 +1569,19 @@ export class CityScene extends Phaser.Scene {
       const gkUser = (window as any).__gkUser;
       const authEl = document.getElementById('hdr-auth');
       if (gkUser && authEl) {
-        authEl.innerHTML =
-          `<img class="hdr-auth-avatar" src="${gkUser.avatar_url}" alt="${gkUser.login}" title="${gkUser.login}" />` +
-          ` <span class="hdr-auth-name" title="View your kingdom">${gkUser.login}</span>`;
+        authEl.textContent = '';
+        const avatar = document.createElement('img');
+        avatar.className = 'hdr-auth-avatar';
+        avatar.src = gkUser.avatar_url;
+        avatar.alt = gkUser.login;
+        avatar.title = gkUser.login;
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'hdr-auth-name';
+        nameSpan.title = 'View your kingdom';
+        nameSpan.textContent = gkUser.login;
+        authEl.appendChild(avatar);
+        authEl.appendChild(document.createTextNode(' '));
+        authEl.appendChild(nameSpan);
         authEl.style.cursor = 'pointer';
         authEl.addEventListener('click', () => { window.location.href = `/${gkUser.login}`; });
       }
@@ -1703,8 +1711,8 @@ export class CityScene extends Phaser.Scene {
         const starsStr = stars >= 1000 ? Math.round(stars / 1000) + 'k★' : stars + '★';
 
         html += `<div class="legend-item legend-settlement" data-bx="${b.x}" data-by="${b.y}" ` +
-          `data-repo="${b.repoMetrics!.repo.name.toLowerCase()}" style="font-size:9px">` +
-          `<span class="legend-name" style="padding-left:4px;${nameStyle}">${starMarker}${b.repoMetrics!.repo.name}</span>` +
+          `data-repo="${esc(b.repoMetrics!.repo.name.toLowerCase())}" style="font-size:9px">` +
+          `<span class="legend-name" style="padding-left:4px;${nameStyle}">${starMarker}${esc(b.repoMetrics!.repo.name)}</span>` +
           `<span class="legend-tier">${starsStr}</span>` +
           `</div>`;
       }
@@ -1715,8 +1723,8 @@ export class CityScene extends Phaser.Scene {
       html += `<div style="color:#7a5a30;font-size:9px;margin-top:6px;border-top:1px solid #a07848;padding-top:4px">🏛 CIVIC (${publicBuildings.length})</div>`;
       for (const b of publicBuildings) {
         html += `<div class="legend-item legend-settlement" data-bx="${b.x}" data-by="${b.y}" ` +
-          `data-repo="${(b.publicName || 'civic').toLowerCase()}" style="font-size:9px">` +
-          `<span class="legend-name" style="padding-left:4px;color:#8a8a6a">🏛 ${b.publicName || 'Civic'}</span>` +
+          `data-repo="${esc((b.publicName || 'civic').toLowerCase())}" style="font-size:9px">` +
+          `<span class="legend-name" style="padding-left:4px;color:#8a8a6a">🏛 ${esc(b.publicName || 'Civic')}</span>` +
           `<span class="legend-tier">${b.width}×${b.height}</span>` +
           `</div>`;
       }
@@ -1733,8 +1741,8 @@ export class CityScene extends Phaser.Scene {
         const isUser = this.highlightUser === c.login.toLowerCase();
         const { icon, title } = citizenTitle(i, totalCitizens, isKing, c.totalContributions);
         const style = isUser ? 'color:#ffd700' : '';
-        html += `<div class="legend-item legend-citizen" data-login="${c.login}" style="font-size:9px">` +
-          `<span class="legend-name" style="padding-left:4px;${style}">${isUser ? '★ ' : ''}${icon} ${c.login}</span>` +
+        html += `<div class="legend-item legend-citizen" data-login="${esc(c.login)}" style="font-size:9px">` +
+          `<span class="legend-name" style="padding-left:4px;${style}">${isUser ? '★ ' : ''}${icon} ${esc(c.login)}</span>` +
           `<span class="legend-tier">${title} · ${c.totalContributions.toLocaleString()}</span>` +
           `</div>`;
       }
@@ -1884,8 +1892,23 @@ function citizenTitle(rank: number, _total: number, isKing: boolean, contributio
   return { icon: '🧑', title: 'Peasant' };
 }
 
+/** Escape HTML special characters to prevent XSS */
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/** Build a safe GitHub link */
+function ghLink(fullName: string, label?: string): string {
+  return `<a class="gh-link" href="https://github.com/${encodeURI(fullName)}" target="_blank" rel="noopener">${esc(label || fullName)}</a>`;
+}
+
+/** Build a safe citizen link (click handler wired separately) */
+function citizenLink(login: string, label?: string): string {
+  return `<a class="gh-link citizen-link" href="#" data-login="${esc(login)}">${esc(label || login)}</a>`;
+}
+
 function stat(label: string, value: string): string {
-  return `<div class="stat"><span class="stat-label">${label}</span><span class="stat-value">${value}</span></div>`;
+  return `<div class="stat"><span class="stat-label">${esc(label)}</span><span class="stat-value">${value}</span></div>`;
 }
 
 function statBar(label: string, value: number, max: number, color: string): string {

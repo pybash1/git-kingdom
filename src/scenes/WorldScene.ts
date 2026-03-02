@@ -730,7 +730,7 @@ export class WorldScene extends Phaser.Scene {
           .slice(0, 5)
       : [];
     const topRepoLinks = topRepoData.map((r: any) =>
-      `<a class="gh-link" href="https://github.com/${r.repo.full_name}" target="_blank" title="${r.repo.full_name}">${r.repo.name}</a>`
+      ghLink(r.repo.full_name, r.repo.name)
     ).join(', ');
     const repoCount = lk ? lk.repos.length : 1;
 
@@ -749,7 +749,7 @@ export class WorldScene extends Phaser.Scene {
       stat('Repos', repoCount.toString()),
       `<div class="stat"><span class="stat-label">Top Repos</span><span class="stat-value">${topRepoLinks}</span></div>`,
       `<button id="enter-city-btn" class="rpgui-button golden" style="width:100%;margin-top:8px">
-        <p>🏰 Enter the City of ${k.language}</p>
+        <p>🏰 Enter the City of ${esc(k.language)}</p>
       </button>`,
     ].join('');
 
@@ -757,7 +757,7 @@ export class WorldScene extends Phaser.Scene {
 
     const kingEl = document.getElementById('info-king')!;
     kingEl.innerHTML = k.king
-      ? `👑 King: <a class="gh-link" href="https://github.com/${k.king.login}" target="_blank">${k.king.login}</a> (${k.king.contributions.toLocaleString()} commits)`
+      ? `👑 King: ${ghLink(k.king.login)} (${k.king.contributions.toLocaleString()} commits)`
       : 'No ruler';
 
     if ((window as any).__resetPanelPos) (window as any).__resetPanelPos(panel);
@@ -860,9 +860,19 @@ export class WorldScene extends Phaser.Scene {
       const gkUser = (window as any).__gkUser;
       const authEl = document.getElementById('hdr-auth');
       if (gkUser && authEl) {
-        authEl.innerHTML =
-          `<img class="hdr-auth-avatar" src="${gkUser.avatar_url}" alt="${gkUser.login}" title="${gkUser.login}" />` +
-          ` <span class="hdr-auth-name" title="View your kingdom">${gkUser.login}</span>`;
+        authEl.textContent = '';
+        const avatar = document.createElement('img');
+        avatar.className = 'hdr-auth-avatar';
+        avatar.src = gkUser.avatar_url;
+        avatar.alt = gkUser.login;
+        avatar.title = gkUser.login;
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'hdr-auth-name';
+        nameSpan.title = 'View your kingdom';
+        nameSpan.textContent = gkUser.login;
+        authEl.appendChild(avatar);
+        authEl.appendChild(document.createTextNode(' '));
+        authEl.appendChild(nameSpan);
         authEl.style.cursor = 'pointer';
         authEl.addEventListener('click', () => { window.location.href = `/${gkUser.login}`; });
       }
@@ -1085,8 +1095,18 @@ export class WorldScene extends Phaser.Scene {
   }
 }
 
+/** Escape HTML special characters to prevent XSS */
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/** Build a safe GitHub link (username/repo names are validated by GitHub, but escape anyway) */
+function ghLink(fullName: string, label?: string): string {
+  return `<a class="gh-link" href="https://github.com/${encodeURI(fullName)}" target="_blank" rel="noopener">${esc(label || fullName)}</a>`;
+}
+
 function stat(label: string, value: string): string {
-  return `<div class="stat"><span class="stat-label">${label}</span><span class="stat-value">${value}</span></div>`;
+  return `<div class="stat"><span class="stat-label">${esc(label)}</span><span class="stat-value">${value}</span></div>`;
 }
 
 function statBar(label: string, value: number, max: number, color: string): string {

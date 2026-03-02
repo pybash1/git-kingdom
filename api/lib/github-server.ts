@@ -33,6 +33,13 @@ interface KingdomMetrics {
 
 const GH_API = 'https://api.github.com';
 
+/** Validate GitHub username/org name format */
+function validateUsername(name: string): void {
+  if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/.test(name)) {
+    throw new Error(`Invalid GitHub username: ${name}`);
+  }
+}
+
 function ghHeaders(token: string): Record<string, string> {
   return {
     Authorization: `Bearer ${token}`,
@@ -50,6 +57,7 @@ export async function fetchUserReposServer(
   maxRepos = 50,
   minStars = 1,
 ): Promise<[string, string][]> {
+  validateUsername(username);
   const repos: [string, string][] = [];
 
   // Try as a user first, then as an org
@@ -87,6 +95,7 @@ export async function fetchUserReposAsMetrics(
   maxRepos = 100,
   minStars = 0,
 ): Promise<KingdomMetrics[]> {
+  validateUsername(username);
   const metrics: KingdomMetrics[] = [];
 
   for (const endpoint of [`/users/${username}/repos`, `/orgs/${username}/repos`]) {

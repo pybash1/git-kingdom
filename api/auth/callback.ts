@@ -1,7 +1,7 @@
 /**
  * GET /api/auth/callback
  * GitHub redirects here after the user approves the OAuth request.
- * Exchanges the code for a token, fetches user info, sets session cookie.
+ * Exchanges the code for a token, fetches user info, sets encrypted session cookie.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { setSession } from '../lib/session';
@@ -20,8 +20,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Clear the state cookie
+  const isSecure = !!process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'development';
   res.setHeader('Set-Cookie', [
-    'gk_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0',
+    `gk_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${isSecure ? '; Secure' : ''}`,
   ]);
 
   const clientId = process.env.GITHUB_CLIENT_ID;
@@ -47,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const tokenData = await tokenRes.json();
     if (tokenData.error || !tokenData.access_token) {
-      console.error('Token exchange failed:', tokenData);
+      console.error('Token exchange failed:', { error: tokenData.error, description: tokenData.error_description });
       return res.status(400).json({ error: tokenData.error_description || 'Token exchange failed' });
     }
 
@@ -67,18 +68,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const user = await userRes.json();
 
-    // Set session cookie
+    // Set encrypted session cookie (includes issued_at for expiry checks)
     setSession(res, {
       login: user.login,
       github_id: user.id,
       avatar_url: user.avatar_url,
       token: accessToken,
+      issued_at: Date.now(),
     });
 
     // Redirect to the user's kingdom page
     res.redirect(302, `/${user.login}`);
   } catch (err: any) {
-    console.error('OAuth callback error:', err);
+    console.error('OAuth callback error:', err?.message || 'Unknown error');
     res.status(500).json({ error: 'Internal error during authentication' });
   }
 }

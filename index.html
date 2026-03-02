@@ -715,7 +715,7 @@
     function openSettings() {
       var panel = document.getElementById('settings-panel');
       panel.style.display = 'block';
-      var saved = localStorage.getItem('gk_gh_token');
+      var saved = sessionStorage.getItem('gk_gh_token') || localStorage.getItem('gk_gh_token');
       var input = document.getElementById('settings-token-input');
       var status = document.getElementById('token-status');
       if (saved) {
@@ -738,12 +738,14 @@
     document.getElementById('btn-save-token').addEventListener('click', function() {
       var token = document.getElementById('settings-token-input').value.trim();
       if (token) {
-        localStorage.setItem('gk_gh_token', token);
+        sessionStorage.setItem('gk_gh_token', token);
+        localStorage.removeItem('gk_gh_token'); // clear legacy storage
         document.getElementById('token-status').textContent = 'Token saved!';
       }
     });
 
     document.getElementById('btn-clear-token').addEventListener('click', function() {
+      sessionStorage.removeItem('gk_gh_token');
       localStorage.removeItem('gk_gh_token');
       document.getElementById('settings-token-input').value = '';
       document.getElementById('token-status').textContent = 'Token cleared.';
@@ -758,9 +760,20 @@
           // User is signed in — replace "Sign in" link with avatar + username in header
           var authEl = document.getElementById('hdr-auth');
           if (authEl) {
-            authEl.innerHTML =
-              '<img class="hdr-auth-avatar" src="' + user.avatar_url + '" alt="' + user.login + '" title="' + user.login + '" />' +
-              ' <span class="hdr-auth-name" title="View your kingdom">' + user.login + '</span>';
+            // Build auth UI safely — no innerHTML with user data
+            authEl.textContent = '';
+            var avatar = document.createElement('img');
+            avatar.className = 'hdr-auth-avatar';
+            avatar.src = user.avatar_url;
+            avatar.alt = user.login;
+            avatar.title = user.login;
+            var nameSpan = document.createElement('span');
+            nameSpan.className = 'hdr-auth-name';
+            nameSpan.title = 'View your kingdom';
+            nameSpan.textContent = user.login;
+            authEl.appendChild(avatar);
+            authEl.appendChild(document.createTextNode(' '));
+            authEl.appendChild(nameSpan);
             // Click avatar/name → go to user's kingdom
             authEl.addEventListener('click', function() {
               window.location.href = '/' + user.login;

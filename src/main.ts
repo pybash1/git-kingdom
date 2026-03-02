@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { WorldScene } from './scenes/WorldScene';
 import { CityScene } from './scenes/CityScene';
 import { TitleScene } from './scenes/TitleScene';
-import { fetchKingdomMetrics, DEFAULT_REPOS, fetchUserRepos, setGitHubToken, getGitHubToken } from './github/api';
+import { fetchKingdomMetrics, DEFAULT_REPOS, fetchUserRepos, getGitHubToken } from './github/api';
 import { KingdomMetrics, LanguageKingdom, ContributorData, Biome } from './types';
 import { SpritePacks } from './generators/TilesetGenerator';
 import { generateTestRepos } from './testdata';
@@ -71,15 +71,6 @@ function groupByLanguage(allMetrics: KingdomMetrics[]): LanguageKingdom[] {
 // ─── Resolve repos from URL params ──────────────────────────
 async function resolveRepos(): Promise<{ repoList: [string, string][]; discoveredUser: string | null }> {
   const params = new URLSearchParams(window.location.search);
-
-  // ?token=ghp_xxx — set GitHub token from URL (then strip from URL)
-  const token = params.get('token');
-  if (token) {
-    setGitHubToken(token);
-    params.delete('token');
-    const clean = params.toString();
-    window.history.replaceState({}, '', clean ? `?${clean}` : window.location.pathname);
-  }
 
   // ?user=someuser — discover repos from a GitHub user/org
   const user = params.get('user') || params.get('org');

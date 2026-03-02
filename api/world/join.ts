@@ -2,11 +2,16 @@
  * POST /api/world/join
  * Authenticated user joins the universal world.
  * Fetches their qualifying repos from GitHub and adds them to the world snapshot.
+ * Rate-limited to 5 joins per user per hour.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSession } from '../lib/session';
+import { getSession, isValidGitHubUsername } from '../lib/session';
 import { registerUser, setUserRepos, rebuildWorldSnapshot } from '../lib/kv';
 import { fetchUserReposAsMetrics } from '../lib/github-server';
+import { kv } from '@vercel/kv';
+
+const RATE_LIMIT_WINDOW = 3600; // 1 hour in seconds
+const RATE_LIMIT_MAX = 5;       // max joins per window
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -18,7 +23,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'Not signed in' });
   }
 
+  // Validate username format
+  if (!isValidGitHubUsername(session.login)) {
+    return res.status(400).json({ error: 'Invalid username' });
+  }
+
   try {
+    // Rate limit by user
+    const rlKey = `ratelimit:join:${session.login}`;
+    const count = await kv.incr(rlKey);
+    if (count === 1) await kv.expire(rlKey, RATE_LIMIT_WINDOW);
+    if (count > RATE_LIMIT_MAX) {
+      return res.status(429).json({ error: 'Rate limited — try again later' });
+    }
+
     // Register the user
     await registerUser({
       login: session.login,
@@ -30,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Fetch repos directly from listing — 1 API call, no per-repo fetches.
     // Contributors are left empty and fetched lazily when entering a city.
     const metrics = await fetchUserReposAsMetrics(session.login, session.token, 100, 0);
-    console.log(`[join] ${session.login}: found ${metrics.length} repos (1 API call)`);
+    console.log(`[join] ${session.login}: found ${metrics.length} repos`);
 
     if (metrics.length > 0) {
       await setUserRepos(session.login, metrics);
@@ -46,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       totalWorldUsers: snapshot.users.length,
     });
   } catch (err: any) {
-    console.error(`[join] Error for ${session.login}:`, err);
+    console.error(`[join] Error for ${session.login}:`, err?.message || 'Unknown error');
     res.status(500).json({ error: 'Failed to join world' });
   }
 }

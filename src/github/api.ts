@@ -47,17 +47,30 @@ function setCache(key: string, data: unknown) {
 }
 
 // Optional GitHub token for higher rate limits (5000/hr vs 60/hr)
+// Uses sessionStorage (cleared on tab close) to reduce XSS exposure window
 let ghToken: string | null = null;
 
 export function setGitHubToken(token: string) {
   ghToken = token;
-  localStorage.setItem('gk_gh_token', token);
+  sessionStorage.setItem('gk_gh_token', token);
 }
 
 export function getGitHubToken(): string | null {
   if (ghToken) return ghToken;
-  ghToken = localStorage.getItem('gk_gh_token');
+  // Check sessionStorage first, fall back to localStorage for migration
+  ghToken = sessionStorage.getItem('gk_gh_token') || localStorage.getItem('gk_gh_token');
+  if (ghToken && !sessionStorage.getItem('gk_gh_token')) {
+    // Migrate: move from localStorage to sessionStorage, then clear localStorage
+    sessionStorage.setItem('gk_gh_token', ghToken);
+    localStorage.removeItem('gk_gh_token');
+  }
   return ghToken;
+}
+
+export function clearGitHubToken() {
+  ghToken = null;
+  sessionStorage.removeItem('gk_gh_token');
+  localStorage.removeItem('gk_gh_token');
 }
 
 function authHeaders(): Record<string, string> {
