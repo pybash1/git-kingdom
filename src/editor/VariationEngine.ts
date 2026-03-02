@@ -203,7 +203,8 @@ export function swapDecorations(
  *   manor   — avg side ≥ 5
  *   guild   — avg side ≥ 4
  *   cottage — avg side ≥ 3
- *   hovel   — avg side < 3
+ *   hovel   — avg side ≥ 2.5 (e.g. 2×3)
+ *   camp    — avg side < 2.5 (e.g. 2×2, 1×1)
  */
 export function footprintToRank(w: number, h: number): BuildingRank {
   const side = Math.round((w + h) / 2);
@@ -214,7 +215,10 @@ export function footprintToRank(w: number, h: number): BuildingRank {
   if (side >= 5)  return 'manor';
   if (side >= 4)  return 'guild';
   if (side >= 3)  return 'cottage';
-  return 'hovel';
+  // 2×3 rounds to 3, so check exact average for hovel vs camp
+  const exact = (w + h) / 2;
+  if (exact >= 2.5) return 'hovel';
+  return 'camp';
 }
 
 // ─── Template Variation Expansion ────────────────────────────

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { WorldScene } from './scenes/WorldScene';
 import { CityScene } from './scenes/CityScene';
 import { TitleScene } from './scenes/TitleScene';
-import { fetchKingdomMetrics, DEFAULT_REPOS, fetchUserRepos, getGitHubToken } from './github/api';
+import { fetchKingdomMetrics, DEFAULT_REPOS, fetchUserRepos } from './github/api';
 import { KingdomMetrics, LanguageKingdom, ContributorData, Biome } from './types';
 import { SpritePacks } from './generators/TilesetGenerator';
 import { generateTestRepos } from './testdata';
@@ -148,29 +148,37 @@ async function loadPrebakedData(): Promise<KingdomMetrics[] | null> {
   }
 }
 
-// ─── Fetch all repo metrics with progress ────────────────────
+// ─── Fetch all repo metrics with progress + concurrency limit ──
 async function fetchAllMetrics(
   repoList: [string, string][],
   onProgress: (loaded: number, total: number) => void,
 ): Promise<KingdomMetrics[]> {
-  const results = await Promise.allSettled(
-    repoList.map(([owner, repo]) => fetchKingdomMetrics(owner, repo))
-  );
-
+  const CONCURRENCY = 15; // max simultaneous GitHub API requests
   const allMetrics: KingdomMetrics[] = [];
   let failCount = 0;
   let isRateLimited = false;
-  for (let i = 0; i < results.length; i++) {
-    const result = results[i];
-    if (result.status === 'fulfilled') {
-      allMetrics.push(result.value);
-      onProgress(allMetrics.length, repoList.length);
-    } else {
-      failCount++;
-      if (String(result.reason).includes('403')) isRateLimited = true;
-      console.warn(`Failed to fetch ${repoList[i].join('/')}: ${result.reason}`);
+  let idx = 0;
+
+  async function worker() {
+    while (idx < repoList.length) {
+      const i = idx++;
+      const [owner, repo] = repoList[i];
+      try {
+        const m = await fetchKingdomMetrics(owner, repo);
+        allMetrics.push(m);
+        onProgress(allMetrics.length + failCount, repoList.length);
+      } catch (err) {
+        failCount++;
+        if (String(err).includes('403')) isRateLimited = true;
+        console.warn(`Failed to fetch ${owner}/${repo}: ${err}`);
+        onProgress(allMetrics.length + failCount, repoList.length);
+      }
     }
   }
+
+  // Launch worker pool
+  const workers = Array.from({ length: Math.min(CONCURRENCY, repoList.length) }, () => worker());
+  await Promise.all(workers);
 
   if (failCount > 0 && isRateLimited) {
     console.warn(`Rate limited: ${failCount}/${repoList.length} repos failed. Showing ${allMetrics.length} cached.`);

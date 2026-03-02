@@ -308,35 +308,7 @@
       50% { opacity: 0.3; }
     }
 
-    /* ─── Settings Panel ─── */
-    #settings-panel {
-      position: fixed !important;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      padding: 16px 20px !important;
-      z-index: 400;
-      width: 420px;
-      display: none;
-    }
-    #settings-panel h3 {
-      font-size: 10px;
-      margin-bottom: 12px;
-    }
-    .settings-hint {
-      font-size: 8px;
-      opacity: 0.7;
-      margin-bottom: 6px;
-      line-height: 1.4;
-    }
-    #settings-panel input {
-      width: 100%;
-      margin-bottom: 6px;
-    }
-    .settings-buttons {
-      display: flex;
-      gap: 8px;
-    }
+    /* Settings panel removed — GitHub token now set via backend GITHUB_TOKEN env var */
     .settings-buttons .rpgui-button {
       flex: 1;
     }
@@ -457,11 +429,11 @@
       min-width: auto !important;
       width: auto !important;
       height: auto !important;
-      padding: 2px 8px !important;
+      padding: 4px 12px !important;
       margin-right: 8px;
       vertical-align: middle;
     }
-    #game-header .header-back p { font-size: 7px !important; margin: 0; line-height: 1 !important; }
+    #game-header .header-back p { font-size: 9px !important; margin: 0; line-height: 1 !important; }
 
     /* ─── Header Search Input ─── */
     #hdr-search {
@@ -572,9 +544,14 @@
     #info-panel .info-header-text {
       flex: 1;
       min-width: 0;
+      text-align: left;
     }
     #info-panel .info-header-text h2 {
       margin-bottom: 4px;
+      text-align: left;
+    }
+    #info-panel #info-tier {
+      text-align: left;
     }
   </style>
 </head>
@@ -600,19 +577,6 @@
       </div>
     </div>
 
-    <!-- Settings Panel (accessible from entry modal + in-game gear icon) -->
-    <div id="settings-panel" class="rpgui-container framed-golden">
-      <button id="settings-close" class="rpgui-button" title="Close"><p>&#10005;</p></button>
-      <h3>Settings</h3>
-      <p class="settings-hint">GitHub Token (optional — raises rate limit from 60 to 5,000 req/hr)</p>
-      <input type="password" id="settings-token-input" placeholder="ghp_xxxxxxxxxxxx" />
-      <div class="settings-buttons">
-        <button id="btn-save-token" class="rpgui-button"><p>Save</p></button>
-        <button id="btn-clear-token" class="rpgui-button"><p>Clear</p></button>
-      </div>
-      <p id="token-status"></p>
-    </div>
-
     <!-- RPG Header Bar — full-width HUD across top -->
     <div id="game-header" class="rpgui-container framed-golden">
       <div class="header-left">
@@ -629,7 +593,6 @@
         <span id="hdr-auth">
           <a href="/api/auth/github" class="hdr-auth-link" id="hdr-signin">Sign in</a>
         </span>
-        <button id="settings-btn" class="rpgui-button" title="Settings" style="display:none;"><p>&#9881;</p></button>
       </div>
     </div>
 
@@ -709,46 +672,6 @@
     document.getElementById('legend-close').addEventListener('click', function(e) {
       e.stopPropagation();
       document.getElementById('legend').style.display = 'none';
-    });
-
-    // ─── Settings panel ───
-    function openSettings() {
-      var panel = document.getElementById('settings-panel');
-      panel.style.display = 'block';
-      var saved = sessionStorage.getItem('gk_gh_token') || localStorage.getItem('gk_gh_token');
-      var input = document.getElementById('settings-token-input');
-      var status = document.getElementById('token-status');
-      if (saved) {
-        input.value = saved;
-        status.textContent = 'Token saved (' + saved.substring(0, 8) + '...)';
-      } else {
-        input.value = '';
-        status.textContent = 'No token set — using public rate limit (60 req/hr)';
-      }
-    }
-
-    // Expose openSettings globally so scenes can call it
-    window.openSettings = openSettings;
-
-    document.getElementById('settings-close').addEventListener('click', function(e) {
-      e.stopPropagation();
-      document.getElementById('settings-panel').style.display = 'none';
-    });
-
-    document.getElementById('btn-save-token').addEventListener('click', function() {
-      var token = document.getElementById('settings-token-input').value.trim();
-      if (token) {
-        sessionStorage.setItem('gk_gh_token', token);
-        localStorage.removeItem('gk_gh_token'); // clear legacy storage
-        document.getElementById('token-status').textContent = 'Token saved!';
-      }
-    });
-
-    document.getElementById('btn-clear-token').addEventListener('click', function() {
-      sessionStorage.removeItem('gk_gh_token');
-      localStorage.removeItem('gk_gh_token');
-      document.getElementById('settings-token-input').value = '';
-      document.getElementById('token-status').textContent = 'Token cleared.';
     });
 
     // ─── GitHub OAuth: check auth on load → update header ───

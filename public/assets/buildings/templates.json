@@ -15361,6 +15361,56 @@
           ]
         ]
       }
+    },
+    {
+      "id": "hovel",
+      "name": "hovel",
+      "width": 2,
+      "height": 2,
+      "layers": {
+        "base": [
+          [
+            null,
+            null
+          ],
+          [
+            null,
+            null
+          ]
+        ],
+        "main": [
+          [
+            {
+              "sheet": "town_B",
+              "frame": 59
+            },
+            {
+              "sheet": "town_B",
+              "frame": 59
+            }
+          ],
+          [
+            {
+              "sheet": "town_B",
+              "frame": 73
+            },
+            {
+              "sheet": "doors_outside",
+              "frame": 1
+            }
+          ]
+        ],
+        "detail": [
+          [
+            null,
+            null
+          ],
+          [
+            null,
+            null
+          ]
+        ]
+      }
     }
   ]
 }

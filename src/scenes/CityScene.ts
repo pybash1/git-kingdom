@@ -50,6 +50,7 @@ const RANK_ICONS: Record<string, string> = {
   guild: '🏠',
   cottage: '🛖',
   hovel: '⛺',
+  camp: '🪵',
 };
 
 // Simple seeded PRNG
@@ -1562,8 +1563,7 @@ export class CityScene extends Phaser.Scene {
       rightEl.innerHTML =
         `<span class="header-stat header-clickable" id="hdr-citizens-btn"><span class="stat-icon">👥</span> <span>${citizenCount}</span> Citizens</span>` +
         `<input type="text" id="hdr-search" placeholder="Search world..." />` +
-        `<span id="hdr-auth"><a href="/api/auth/github" class="hdr-auth-link" id="hdr-signin">Sign in</a></span>` +
-        `<button id="settings-btn" class="rpgui-button" title="Settings" style="display:inline-block;"><p>&#9881;</p></button>`;
+        `<span id="hdr-auth"><a href="/api/auth/github" class="hdr-auth-link" id="hdr-signin">Sign in</a></span>`;
 
       // Restore auth state if user is already signed in
       const gkUser = (window as any).__gkUser;
@@ -1584,15 +1584,6 @@ export class CityScene extends Phaser.Scene {
         authEl.appendChild(nameSpan);
         authEl.style.cursor = 'pointer';
         authEl.addEventListener('click', () => { window.location.href = `/${gkUser.login}`; });
-      }
-
-      // Wire up settings button
-      const settingsBtn = document.getElementById('settings-btn');
-      if (settingsBtn) {
-        settingsBtn.addEventListener('click', () => {
-          (window as any).openSettings?.() ||
-            ((document.getElementById('settings-panel') as HTMLElement).style.display = 'block');
-        });
       }
 
       // Wire up search input — search navigates within the world, no page reload
@@ -1849,30 +1840,31 @@ export class CityScene extends Phaser.Scene {
 
 /**
  * Medieval title hierarchy based on contribution count.
+ * All titles are gender-neutral since we don't know developers' identities.
  * Each tier has many name variants — the citizen's rank index selects
  * which variant they get, so adjacent citizens rarely share a title.
  *
  *  Tier         Commits   Titles
  *  ─────────────────────────────────────────────────
- *  Royalty      (king)    King / Queen
- *  High Noble   3000+     Grand Duke, Archduke, Prince, Sovereign, High Chancellor, Regent
- *  Noble        1500+     Duke, Duchess, Marquess, Marchioness, Viceroy, Palatine
- *  Upper Lord   800+      Earl, Count, Countess, Viscount, Jarl, Overlord, Warden
- *  Lower Lord   400+      Baron, Baroness, Thane, Castellan, Liege, Banneret, Steward
- *  Knight       150+      Knight, Dame, Paladin, Templar, Sentinel, Champion, Crusader, Defender
- *  Gentry       50+       Squire, Esquire, Herald, Reeve, Magistrate, Bailiff, Alderman, Yeoman
- *  Artisan      15+       Artisan, Scribe, Mason, Smith, Alchemist, Herbalist, Tinkerer, Sage
- *  Commoner     1+        Peasant, Villager, Commoner, Serf, Wanderer, Pilgrim, Drifter, Vagabond
+ *  Royalty      (ruler)   Sovereign, Monarch
+ *  High Noble   5000+     Archduke, Regent, High Chancellor, Sovereign, Grand Protector, Viceroy
+ *  Noble        3000+     Marquess, Palatine, Viceroy, Warden, Grand Steward, Emissary
+ *  Upper Lord   1500+     Earl, Viscount, Jarl, Overlord, Warden, Castellan, Protector
+ *  Lower Lord   750+      Thane, Castellan, Liege, Banneret, Steward, Keeper, Seneschal
+ *  Knight       300+      Knight, Paladin, Templar, Sentinel, Champion, Crusader, Defender, Guardian
+ *  Gentry       100+      Squire, Esquire, Herald, Reeve, Magistrate, Bailiff, Alderman, Yeoman
+ *  Artisan      25+       Artisan, Scribe, Mason, Smith, Alchemist, Herbalist, Tinkerer, Sage
+ *  Commoner     0+        Peasant, Villager, Commoner, Serf, Wanderer, Pilgrim, Drifter, Vagabond
  */
 const TITLE_TIERS: { min: number; icon: string; names: string[] }[] = [
-  { min: 0,    icon: '👑', names: ['King', 'Queen'] },  // only isKing gets this
-  { min: 3000, icon: '🏰', names: ['Grand Duke', 'Archduke', 'Prince', 'Sovereign', 'High Chancellor', 'Regent'] },
-  { min: 1500, icon: '🏰', names: ['Duke', 'Duchess', 'Marquess', 'Marchioness', 'Viceroy', 'Palatine'] },
-  { min: 800,  icon: '⚜',  names: ['Earl', 'Count', 'Countess', 'Viscount', 'Jarl', 'Overlord', 'Warden'] },
-  { min: 400,  icon: '🛡',  names: ['Baron', 'Baroness', 'Thane', 'Castellan', 'Liege', 'Banneret', 'Steward'] },
-  { min: 150,  icon: '⚔',  names: ['Knight', 'Dame', 'Paladin', 'Templar', 'Sentinel', 'Champion', 'Crusader', 'Defender'] },
-  { min: 50,   icon: '🗡',  names: ['Squire', 'Esquire', 'Herald', 'Reeve', 'Magistrate', 'Bailiff', 'Alderman', 'Yeoman'] },
-  { min: 15,   icon: '🔨',  names: ['Artisan', 'Scribe', 'Mason', 'Smith', 'Alchemist', 'Herbalist', 'Tinkerer', 'Sage'] },
+  { min: 0,    icon: '👑', names: ['Sovereign', 'Monarch'] },  // only isKing gets this
+  { min: 5000, icon: '🏰', names: ['Archduke', 'Regent', 'High Chancellor', 'Sovereign', 'Grand Protector', 'Viceroy'] },
+  { min: 3000, icon: '🏰', names: ['Marquess', 'Palatine', 'Viceroy', 'Warden', 'Grand Steward', 'Emissary'] },
+  { min: 1500, icon: '⚜',  names: ['Earl', 'Viscount', 'Jarl', 'Overlord', 'Warden', 'Castellan', 'Protector'] },
+  { min: 750,  icon: '🛡',  names: ['Thane', 'Castellan', 'Liege', 'Banneret', 'Steward', 'Keeper', 'Seneschal'] },
+  { min: 300,  icon: '⚔',  names: ['Knight', 'Paladin', 'Templar', 'Sentinel', 'Champion', 'Crusader', 'Defender', 'Guardian'] },
+  { min: 100,  icon: '🗡',  names: ['Squire', 'Esquire', 'Herald', 'Reeve', 'Magistrate', 'Bailiff', 'Alderman', 'Yeoman'] },
+  { min: 25,   icon: '🔨',  names: ['Artisan', 'Scribe', 'Mason', 'Smith', 'Alchemist', 'Herbalist', 'Tinkerer', 'Sage'] },
   { min: 0,    icon: '🧑',  names: ['Peasant', 'Villager', 'Commoner', 'Serf', 'Wanderer', 'Pilgrim', 'Drifter', 'Vagabond'] },
 ];
 

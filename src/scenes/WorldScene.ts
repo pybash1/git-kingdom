@@ -757,7 +757,7 @@ export class WorldScene extends Phaser.Scene {
 
     const kingEl = document.getElementById('info-king')!;
     kingEl.innerHTML = k.king
-      ? `👑 King: ${ghLink(k.king.login)} (${k.king.contributions.toLocaleString()} commits)`
+      ? `👑 Ruler: ${ghLink(k.king.login)} (${k.king.contributions.toLocaleString()} commits)`
       : 'No ruler';
 
     if ((window as any).__resetPanelPos) (window as any).__resetPanelPos(panel);
@@ -853,8 +853,7 @@ export class WorldScene extends Phaser.Scene {
     if (rightEl) {
       rightEl.innerHTML =
         `<input type="text" id="hdr-search" placeholder="Search world..." />` +
-        `<span id="hdr-auth"><a href="/api/auth/github" class="hdr-auth-link" id="hdr-signin">Sign in</a></span>` +
-        `<button id="settings-btn" class="rpgui-button" title="Settings" style="display:inline-block;"><p>&#9881;</p></button>`;
+        `<span id="hdr-auth"><a href="/api/auth/github" class="hdr-auth-link" id="hdr-signin">Sign in</a></span>`;
 
       // Restore auth state if user is already signed in
       const gkUser = (window as any).__gkUser;
@@ -877,14 +876,6 @@ export class WorldScene extends Phaser.Scene {
         authEl.addEventListener('click', () => { window.location.href = `/${gkUser.login}`; });
       }
 
-      // Wire up settings button
-      const settingsBtn = document.getElementById('settings-btn');
-      if (settingsBtn) {
-        settingsBtn.addEventListener('click', () => {
-          (window as any).openSettings?.() ||
-            ((document.getElementById('settings-panel') as HTMLElement).style.display = 'block');
-        });
-      }
     }
 
     // Wire up the search input

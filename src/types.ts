@@ -36,8 +36,8 @@ export type Biome = 'grassland' | 'forest' | 'mountain' | 'volcanic' | 'crystal'
 
 // ─── City-Builder Model Types ────────────────────────────────
 
-// Building rank within a city — determines visual size (8 tiers, city-builder style)
-export type BuildingRank = 'citadel' | 'castle' | 'palace' | 'keep' | 'manor' | 'guild' | 'cottage' | 'hovel';
+// Building rank within a city — determines visual size (9 tiers, city-builder style)
+export type BuildingRank = 'citadel' | 'castle' | 'palace' | 'keep' | 'manor' | 'guild' | 'cottage' | 'hovel' | 'camp';
 
 // What the building "does" based on repo topics
 export type BuildingPurpose = 'web' | 'arcane' | 'forge' | 'market' | 'general';

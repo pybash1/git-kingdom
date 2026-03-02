@@ -16,36 +16,46 @@ function mulberry32(seed: number) {
 }
 
 // ─── Minimum stars to appear on the map ─────────────────────
-const MIN_STARS = 2;
+// Every repo gets a building — hovels for tiny repos, castles for legends
+const MIN_STARS = 0;
 
 // ─── Stars → Building footprint (with rectangular shapes) ───
-// Maps star count to one or more footprint options that match editor presets.
-// A seed selects which shape a building gets, adding visual variety.
-// The #1 repo in a kingdom gets a +2 bonus on both dimensions.
-// Base max is 16×16 — only the #1 repo gets boosted to 20×20.
-// Most buildings are small homes. Only top few repos are notable.
-// #1 repo gets +4 bonus → castle. Everyone else is modest.
-// A city of cottages with a few guild halls feels like a real medieval town.
+// Maps star count to footprint options matching editor template sizes.
+// #1 repo in each kingdom gets a +4 bonus → the castle.
+// Thresholds are deliberately high — big buildings are earned.
+//
+//   Stars     Footprint    Rank         What it is
+//   ────────────────────────────────────────────────
+//   100k+     8×10         castle       Legendary (React, Linux)
+//   50k+      6×8          keep         Major framework
+//   20k+      5×7 / 5×5    manor        Popular library
+//   10k+      4×6 / 4×4    guild        Well-known tool
+//   5k+       4×4 / 3×5    guild        Established project
+//   2k+       3×5 / 3×3    cottage      Active project
+//   500+      3×3          cottage      Growing project
+//   50+       2×3          hovel        Small project
+//   0+        2×2          hovel        Beginner repo
 const FOOTPRINT_PRESETS: { minStars: number; shapes: { w: number; h: number }[] }[] = [
-  { minStars: 100000, shapes: [{ w: 6,  h: 8  }] },                    // keep (+ #1 bonus → 10×12 castle)
-  { minStars: 50000,  shapes: [{ w: 5,  h: 7  }] },                    // manor (+ #1 bonus → 9×11 palace)
-  { minStars: 20000,  shapes: [{ w: 5,  h: 5  }] },                    // manor
+  { minStars: 100000, shapes: [{ w: 8,  h: 10 }] },                    // castle
+  { minStars: 50000,  shapes: [{ w: 6,  h: 8  }] },                    // keep
+  { minStars: 20000,  shapes: [{ w: 5,  h: 7  }, { w: 5,  h: 5  }] }, // manor
   { minStars: 10000,  shapes: [{ w: 4,  h: 6  }, { w: 4,  h: 4  }] }, // guild
   { minStars: 5000,   shapes: [{ w: 4,  h: 4  }, { w: 3,  h: 5  }] }, // guild/cottage
   { minStars: 2000,   shapes: [{ w: 3,  h: 5  }, { w: 3,  h: 3  }] }, // cottage
   { minStars: 500,    shapes: [{ w: 3,  h: 3  }] },                    // cottage
-  { minStars: 2,      shapes: [{ w: 3,  h: 3  }] },                    // cottage
+  { minStars: 50,     shapes: [{ w: 2,  h: 3  }, { w: 3,  h: 3  }] }, // hovel/cottage
+  { minStars: 0,      shapes: [{ w: 2,  h: 2  }] },                    // hovel
 ];
 
 function getBuildingFootprint(stars: number, isTopRepo: boolean, seed: number): { w: number; h: number } {
-  let shapes = [{ w: 3, h: 3 }]; // fallback (cottage)
+  let shapes = [{ w: 2, h: 2 }]; // fallback (hovel)
   for (const t of FOOTPRINT_PRESETS) {
     if (stars >= t.minStars) { shapes = t.shapes; break; }
   }
   // Pick a shape deterministically from the options
   const shape = shapes[Math.abs(seed) % shapes.length];
   let { w, h } = shape;
-  // #1 repo is the castle — only it can reach 20×20
+  // #1 repo is the castle — gets bonus footprint
   if (isTopRepo) {
     w = Math.min(20, w + 4);
     h = Math.min(20, h + 4);
@@ -539,114 +549,10 @@ export function generateCityInterior(
     smallIdx++;
   }
 
-  // Step D: FILLER COTTAGES — fill remaining empty blocks with generic homes.
-  // In a real medieval city most buildings are unnamed commoner homes.
-  // Use varied footprints so the variation engine picks from all small templates
-  // (3×3 cottage, 3×5 guild, 4×4 guild) — not just one size.
-  // Scan from center outward for natural density gradient.
-  // PERF: Cap passes to prevent runaway on large grids (200×200 = 40K candidates).
+  // No filler cottages — every building represents a real repo.
+  // Cities grow organically as users join and contribute repos.
 
-  let fillerCount = 0;
-  const MAX_FILLER_PASSES = 20;
-
-  // Filler footprints in priority order — try larger first for variety,
-  // fall back to smaller to fill tight gaps.
-  const FILLER_FOOTPRINTS = [
-    { w: 4, h: 4 },  // guild — matches hovel1-style templates
-    { w: 3, h: 5 },  // guild — matches home3/red-cottage style templates
-    { w: 3, h: 3 },  // cottage — smallest, fills remaining gaps
-  ];
-  const maxFillerSide = 5; // largest dimension in FILLER_FOOTPRINTS
-
-  // Build a list of candidate positions. Use distance bands to create
-  // a more even spread with clusters (neighborhoods) rather than
-  // pure center-outward fill.
-  const fillerCandidates: { x: number; y: number }[] = [];
-  for (let y = 3; y < H - 3 - maxFillerSide; y++) {
-    for (let x = 3; x < W - 3 - maxFillerSide; x++) {
-      fillerCandidates.push({ x, y });
-    }
-  }
-  // Sort by distance bands (rings) — within each band, positions are interleaved
-  // so buildings spread across all quadrants of the city evenly
-  const maxDist = Math.abs(midX) + Math.abs(midY);
-  const bandSize = Math.max(4, Math.floor(maxDist / 6));
-  fillerCandidates.sort((a, b) => {
-    const distA = Math.abs(a.x + 1 - midX) + Math.abs(a.y + 1 - midY);
-    const distB = Math.abs(b.x + 1 - midX) + Math.abs(b.y + 1 - midY);
-    const bandA = Math.floor(distA / bandSize);
-    const bandB = Math.floor(distB / bandSize);
-    if (bandA !== bandB) return bandA - bandB;
-    // Within same band, alternate quadrants for even spread
-    const quadA = (a.x < midX ? 0 : 1) + (a.y < midY ? 0 : 2);
-    const quadB = (b.x < midX ? 0 : 1) + (b.y < midY ? 0 : 2);
-    return quadA - quadB;
-  });
-
-  // Simple deterministic shuffle helper — vary which footprint we try first
-  // at each candidate so we get a mix of sizes, not all 4×4 then all 3×5.
-  let fillerSeed = 0;
-
-  // Multiple passes — each new building creates adjacency for the next wave.
-  // Stop when a full pass adds nothing OR we hit the pass cap.
-  let fillerChanged = true;
-  let fillerPass = 0;
-  while (fillerChanged && fillerPass < MAX_FILLER_PASSES) {
-    fillerChanged = false;
-    fillerPass++;
-    for (const fc of fillerCandidates) {
-      const { x, y } = fc;
-
-      // Try each footprint size, starting at a rotating offset for variety
-      let placed = false;
-      const startIdx = (fillerSeed++) % FILLER_FOOTPRINTS.length;
-      for (let fi = 0; fi < FILLER_FOOTPRINTS.length; fi++) {
-        const fp = FILLER_FOOTPRINTS[(startIdx + fi) % FILLER_FOOTPRINTS.length];
-        if (!canPlace(x, y, fp.w, fp.h)) continue;
-
-        // Place if adjacent to a road OR another building (buildings grow clusters)
-        let adjacent = false;
-        checkAdj:
-        for (let ey = -1; ey <= fp.h; ey++) {
-          for (let ex = -1; ex <= fp.w; ex++) {
-            if (ex >= 0 && ex < fp.w && ey >= 0 && ey < fp.h) continue; // skip interior
-            const rx = x + ex, ry = y + ey;
-            if (rx >= 0 && rx < W && ry >= 0 && ry < H) {
-              if (roadGrid[ry * W + rx] || buildingGrid[ry * W + rx]) {
-                adjacent = true;
-                break checkAdj;
-              }
-            }
-          }
-        }
-        if (!adjacent) continue;
-
-        const rank = footprintToRank(fp.w, fp.h);
-        placeBuildingTiles(terrain, x, y, fp.w, fp.h, rank);
-        for (let bdy = 0; bdy < fp.h; bdy++) {
-          for (let bdx = 0; bdx < fp.w; bdx++) {
-            const idx = (y + bdy) * W + (x + bdx);
-            buildingGrid[idx] = 1;
-            occupiedGrid[idx] = 1;
-          }
-        }
-        buildings.push({
-          rank,
-          purpose: 'general' as BuildingPurpose,
-          x, y,
-          width: fp.w, height: fp.h,
-          isPublic: true,
-          publicName: '',  // unnamed commoner home — no label
-        });
-        fillerCount++;
-        fillerChanged = true;
-        placed = true;
-        break; // placed this candidate, move on
-      }
-    }
-  }
-
-  console.log(`[CityGenerator] ${kingdom.language}: ${sortedRepos.length} repos → ${buildings.length} buildings (${fillerCount} filler, ${fillerPass} passes) in ${W}×${H} city (${roadCount} road tiles, ${cityBlocks.length} blocks)`);
+  console.log(`[CityGenerator] ${kingdom.language}: ${sortedRepos.length} repos → ${buildings.length} buildings in ${W}×${H} city (${roadCount} road tiles, ${cityBlocks.length} blocks)`);
 
   // ── 6. Connect any disconnected buildings to nearest road ──
   for (const b of buildings) {
@@ -862,11 +768,8 @@ export function placePublicBuildings(
   const midY = Math.floor(H / 2);
   const repoCount = buildings.filter(b => !b.isPublic).length;
 
-  // Scale civic count: more repos → more civic buildings
-  const civicCount = Math.min(
-    publicVariants.length * 2,
-    Math.floor(repoCount * 0.4) + 2,
-  );
+  // Keep civic buildings minimal — just a few landmarks per city
+  const civicCount = Math.min(publicVariants.length, Math.max(1, Math.floor(repoCount * 0.1)));
 
   const added: CityBuilding[] = [];
 
