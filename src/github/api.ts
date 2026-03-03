@@ -189,6 +189,47 @@ export const DEFAULT_REPOS: [string, string][] = [
   ['koajs', 'koa'],                  // 35k★  web framework
   ['nodemailer', 'nodemailer'],      // 17k★  email sending
   ['lovell', 'sharp'],               // 29k★  image processing
+  // Additional JS repos for city density
+  ['jashkenas', 'underscore'],       // 27k★  utility library
+  ['jashkenas', 'backbone'],         // 28k★  MVC framework
+  ['gulpjs', 'gulp'],                // 33k★  task runner
+  ['gruntjs', 'grunt'],              // 12k★  task runner
+  ['yargs', 'yargs'],                // 11k★  CLI argument parser
+  ['ecomfe', 'echarts'],             // 2k★   charting (fork)
+  ['pixijs', 'pixijs'],              // 44k★  2D renderer
+  ['hakimel', 'reveal.js'],           // 68k★  presentations
+  ['fabricjs', 'fabric.js'],         // 29k★  canvas library
+  ['Modernizr', 'Modernizr'],       // 26k★  feature detection
+  ['FullHuman', 'purgecss'],         // 8k★   unused CSS remover
+  ['naptha', 'tesseract.js'],        // 35k★  OCR
+  ['dcloudio', 'uni-app'],           // 40k★  cross-platform app
+  ['NervJS', 'taro'],                // 36k★  cross-platform
+  ['goldbergyoni', 'nodebestpractices'], // 100k★ best practices
+  ['ryanmcdermott', 'clean-code-javascript'], // 92k★ clean code
+  ['responsively-org', 'responsively-app'], // 23k★ responsive viewer
+  ['webtorrent', 'webtorrent'],      // 30k★  streaming torrent
+  ['badges', 'shields'],             // 24k★  badge service
+  // Smaller JS repos for dense city feel
+  ['jamiebuilds', 'the-super-tiny-compiler'], // 28k★ tiny compiler
+  ['michalsnik', 'aos'],              // 26k★  scroll animations
+  ['alvarotrigo', 'fullPage.js'],     // 35k★  fullscreen scrolling
+  ['VincentGarreau', 'particles.js'], // 29k★  particle backgrounds
+  ['processing', 'p5.js'],            // 22k★  creative coding
+  ['mermaid-js', 'mermaid'],          // 73k★  diagrams from text
+  ['js-cookie', 'js-cookie'],         // 22k★  cookie handling
+  ['cure53', 'DOMPurify'],            // 14k★  XSS sanitizer
+  ['nodeca', 'pako'],                 // 5k★   zlib port
+  ['i18next', 'i18next'],             // 8k★   internationalization
+  ['pouchdb', 'pouchdb'],             // 17k★  in-browser DB
+  ['jsdoc', 'jsdoc'],                 // 15k★  documentation
+  ['localForage', 'localForage'],     // 25k★  offline storage
+  ['fingerprintjs', 'fingerprintjs'], // 23k★  browser fingerprint
+  ['dropzone', 'dropzone'],           // 18k★  file upload
+  ['mishoo', 'UglifyJS'],             // 13k★  JS compressor
+  ['epoberezkin', 'ajv'],             // 14k★  JSON schema validator
+  ['Day8', 'transducers-js'],         // ~100★ transducers
+  ['SocketCluster', 'socketcluster'], // 6k★   real-time framework
+  ['mqttjs', 'MQTT.js'],              // 8k★   MQTT client
 
   // ── TypeScript ────────────────────────────────────────────────
   // Castle / Citadel tier
@@ -262,6 +303,67 @@ export const DEFAULT_REPOS: [string, string][] = [
   ['turbopackjs', 'turbopack'],      // 1k★   bundler
   ['tremorlabs', 'tremor-raw'],      // 1k★   chart components
   ['total-typescript', 'beginners-typescript-tutorial'], // 8k★ tutorial
+  // Additional TS repos for city density
+  ['withastro', 'astro'],             // 48k★  content-focused framework
+  ['facebook', 'docusaurus'],          // 57k★  documentation framework (meta)
+  ['vuetifyjs', 'vuetify'],           // 40k★  Material Design Vue
+  ['ant-design', 'ant-design-pro'],   // 36k★  admin template
+  ['mswjs', 'msw'],                   // 16k★  API mocking
+  ['sst', 'sst'],                     // 22k★  serverless framework
+  ['blitz-js', 'blitz'],              // 14k★  full-stack React
+  ['solidjs', 'solid'],               // 33k★  reactive UI library
+  ['withfig', 'autocomplete'],        // 24k★  terminal autocomplete
+  ['pnpm', 'pnpm'],                   // 30k★  package manager
+  ['pmndrs', 'jotai'],                // 19k★  atomic state
+  ['vueuse', 'vueuse'],               // 20k★  Vue composition utils
+  ['chakra-ui', 'chakra-ui'],         // 38k★  React components
+  ['mantinedev', 'mantine'],          // 27k★  React components
+  ['radix-ui', 'primitives'],         // 16k★  UI primitives
+  ['shadcn-ui', 'ui'],                // 75k★  UI components
+  ['vitest-dev', 'vitest'],           // 13k★  test runner
+  ['lucia-auth', 'lucia'],            // 10k★  auth library
+  ['payloadcms', 'payload'],          // 30k★  headless CMS
+  ['directus', 'directus'],           // 29k★  headless CMS
+  ['sanity-io', 'sanity'],            // 5k★   structured content
+  ['tinacms', 'tinacms'],             // 12k★  visual CMS
+  ['cloudflare', 'workers-sdk'],      // 2k★   Cloudflare Workers
+  ['unjs', 'nitro'],                  // 6k★   server toolkit
+  ['unjs', 'unbuild'],                // 2k★   build system
+  ['changesets', 'changesets'],        // 9k★   version management
+  ['TypeCellOS', 'BlockNote'],         // 7k★   block-based editor
+  ['upstash', 'upstash-redis'],       // 2k★   serverless Redis
+  ['vercel', 'swr'],                  // 30k★  data fetching hooks
+  ['TanStack', 'router'],             // 8k★   type-safe router
+  // Smaller TS repos for dense city feel
+  ['TanStack', 'table'],              // 25k★  headless table
+  ['TanStack', 'form'],               // 4k★   form library
+  ['tRPC', 'examples-next-prisma-starter'], // 1k★ starter example
+  ['aidenybai', 'pattycake'],         // ~500★ pattern matching
+  ['mattpocock', 'ts-reset'],         // 8k★   better types
+  ['millsp', 'ts-toolbelt'],          // 7k★   type toolkit
+  ['sindresorhus', 'ky'],             // 13k★  HTTP client
+  ['sindresorhus', 'p-limit'],        // 2k★   concurrency limit
+  ['unjs', 'consola'],                // 6k★   console logging
+  ['unjs', 'h3'],                     // 4k★   HTTP framework
+  ['unjs', 'defu'],                   // 1k★   deep merge defaults
+  ['unjs', 'pathe'],                  // ~500★ path utilities
+  ['unjs', 'ufo'],                    // 1k★   URL utilities
+  ['remix-run', 'react-router'],      // 54k★  React routing
+  ['date-fns', 'tz'],                 // ~300★ timezone support
+  ['pmndrs', 'valtio'],               // 9k★   proxy state
+  ['pmndrs', 'drei'],                 // 8k★   R3F helpers
+  ['pmndrs', 'react-three-fiber'],    // 28k★  React + Three.js
+  ['colinhacks', 'tozod'],            // ~200★ type inference
+  ['scottksmith95', 'LZ-UTF8'],       // ~250★ string compression
+  ['valibot', 'valibot'],             // 6k★   schema validation
+  ['formkit', 'tempo'],               // 2k★   date formatting
+  ['microsoft', 'tsyringe'],          // 5k★   DI container
+  ['wundergraph', 'cosmo'],           // 2k★   GraphQL federation
+  ['Effect-TS', 'schema'],            // 3k★   schema library
+  ['vercel', 'turbo'],                // 26k★  monorepo tool
+  ['supabase', 'realtime'],           // 7k★   realtime engine
+  ['openai', 'openai-node'],          // 8k★   OpenAI SDK
+  ['anthropics', 'anthropic-sdk-typescript'], // 2k★ Anthropic SDK
 
   // ── Python ────────────────────────────────────────────────────
   // Castle / Citadel tier
@@ -316,6 +418,27 @@ export const DEFAULT_REPOS: [string, string][] = [
   ['more-itertools', 'more-itertools'], // 4k★ itertools extensions
   ['tartley', 'colorama'],           // 3k★   terminal colors
   ['keleshev', 'schema'],            // 3k★   data validation
+  // Smaller Python repos for dense city feel
+  ['arrow-py', 'arrow'],             // 9k★   better dates
+  ['marshmallow-code', 'marshmallow'], // 7k★  serialization
+  ['tqdm', 'tqdm'],                   // 28k★  progress bars
+  ['PyGithub', 'PyGithub'],          // 7k★   GitHub API wrapper
+  ['burnash', 'gspread'],            // 7k★   Google Sheets API
+  ['jmcnamara', 'XlsxWriter'],       // 4k★   Excel writer
+  ['python-pillow', 'Pillow'],       // 12k★  image processing
+  ['geopy', 'geopy'],                // 4k★   geocoding
+  ['python-poetry', 'poetry'],       // 32k★  package manager
+  ['psf', 'black'],                  // 39k★  code formatter
+  ['PyCQA', 'flake8'],               // 3k★   linting
+  ['PyCQA', 'isort'],                // 7k★   import sorting
+  ['astral-sh', 'ruff'],             // 34k★  fast linter (Rust)
+  ['astral-sh', 'uv'],               // 30k★  fast pip (Rust)
+  ['pypa', 'pip'],                    // 10k★  package installer
+  ['docopt', 'docopt'],              // 8k★   CLI arguments
+  ['prompt-toolkit', 'python-prompt-toolkit'], // 9k★ REPL toolkit
+  ['sivel', 'speedtest-cli'],        // 14k★  internet speed test
+  ['encode', 'starlette'],           // 10k★  ASGI framework
+  ['encode', 'uvicorn'],             // 8k★   ASGI server
 
   // ── Rust ──────────────────────────────────────────────────────
   // Castle / Citadel tier

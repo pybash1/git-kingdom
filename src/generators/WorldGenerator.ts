@@ -726,13 +726,13 @@ export function generateWorld(languageKingdoms: LanguageKingdom[]): WorldData {
     k.settlements.forEach(s => (s.kingdomIndex = i));
   });
 
-  // World size scales with total kingdom area
+  // World size scales with total kingdom area — generous sizing prevents label overlap
   const totalArea = kingdoms.reduce((sum, k) => sum + k.targetArea, 0);
-  const targetArea = totalArea * 2.5;
+  const targetArea = totalArea * 3.5; // bigger map → more spacing between kingdoms
   const aspect = 1.4;
   const rawW = Math.sqrt(targetArea * aspect);
-  const W = Math.max(100, Math.min(300, Math.round(rawW)));
-  const H = Math.max(70, Math.min(220, Math.round(rawW / aspect)));
+  const W = Math.max(140, Math.min(400, Math.round(rawW)));
+  const H = Math.max(100, Math.min(300, Math.round(rawW / aspect)));
 
   // Pipeline
   const land = generateLandmass(W, H, numContinents);

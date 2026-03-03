@@ -286,11 +286,32 @@ export class WorldScene extends Phaser.Scene {
 
     // ── City labels with dark RPG banner for name only ──
     // Stats and king name go underneath the banner with stroke outlines
+    // First, compute label positions and nudge apart any that overlap
+    const labelPositions: { x: number; y: number }[] = kingdoms.map(k => ({
+      x: k.settlements[0].x * TILE_SIZE,
+      y: k.settlements[0].y * TILE_SIZE - 16,
+    }));
+    // Push overlapping labels apart vertically (minimum gap in world pixels)
+    const MIN_LABEL_GAP = 52;
+    for (let pass = 0; pass < 3; pass++) {
+      for (let i = 0; i < labelPositions.length; i++) {
+        for (let j = i + 1; j < labelPositions.length; j++) {
+          const a = labelPositions[i], b = labelPositions[j];
+          const dx = Math.abs(a.x - b.x), dy = Math.abs(a.y - b.y);
+          if (dx < 100 && dy < MIN_LABEL_GAP) {
+            const nudge = Math.ceil((MIN_LABEL_GAP - dy) / 2) + 4;
+            if (a.y <= b.y) { a.y -= nudge; b.y += nudge; }
+            else { b.y -= nudge; a.y += nudge; }
+          }
+        }
+      }
+    }
+
     const hasBannerTex = this.textures.exists('ui-banner-grey') || this.textures.exists('ui-banner-dark');
-    for (const k of kingdoms) {
-      const s = k.settlements[0];
-      const labelX = s.x * TILE_SIZE;
-      const labelY = s.y * TILE_SIZE - 16;
+    for (let ki = 0; ki < kingdoms.length; ki++) {
+      const k = kingdoms[ki];
+      const labelX = labelPositions[ki].x;
+      const labelY = labelPositions[ki].y;
 
       // Format star count
       const starsStr = k.totalStars >= 1000000

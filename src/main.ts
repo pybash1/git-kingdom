@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { WorldScene } from './scenes/WorldScene';
 import { CityScene } from './scenes/CityScene';
 import { TitleScene } from './scenes/TitleScene';
-import { fetchKingdomMetrics, DEFAULT_REPOS, fetchUserRepos } from './github/api';
 import { KingdomMetrics, LanguageKingdom, ContributorData, Biome } from './types';
 import { SpritePacks } from './generators/TilesetGenerator';
 import { generateTestRepos } from './testdata';
@@ -29,8 +28,13 @@ function groupByLanguage(allMetrics: KingdomMetrics[]): LanguageKingdom[] {
     groups.get(lang)!.push(m);
   }
 
+  // Filter out tiny language groups (< 3 repos) — they clutter the world map
+  // and are usually repos whose GitHub-detected language differs from expected
+  const MIN_REPOS_FOR_KINGDOM = 3;
+
   const kingdoms: LanguageKingdom[] = [];
   for (const [language, repos] of groups) {
+    if (repos.length < MIN_REPOS_FOR_KINGDOM) continue;
     const commitsByUser = new Map<string, { login: string; contributions: number; avatar_url: string }>();
     for (const r of repos) {
       for (const c of r.contributors) {
@@ -68,35 +72,32 @@ function groupByLanguage(allMetrics: KingdomMetrics[]): LanguageKingdom[] {
   return kingdoms;
 }
 
-// ─── Resolve repos from URL params ──────────────────────────
-async function resolveRepos(): Promise<{ repoList: [string, string][]; discoveredUser: string | null }> {
-  const params = new URLSearchParams(window.location.search);
+// ─── Load world data (Supabase API → pre-baked JSON fallback) ──
+async function loadWorldData(loadingEl: HTMLElement): Promise<KingdomMetrics[]> {
+  // Try server API first (Supabase Postgres, cached at edge)
+  loadingEl.textContent = 'Loading world data...';
+  const world = await fetchUniversalWorld();
+  if (world && world.repos.length > 0) {
+    console.log(`Loaded ${world.repos.length} repos from /api/world`);
+    return world.repos;
+  }
 
-  // ?user=someuser — discover repos from a GitHub user/org
-  const user = params.get('user') || params.get('org');
-  if (user) {
-    const loadingEl = document.getElementById('loading')!;
-    loadingEl.textContent = `Discovering repos for ${user}...`;
-    const repos = await fetchUserRepos(user, 30);
-    if (repos.length > 0) {
-      console.log(`Discovered ${repos.length} repos for ${user}`);
-      return { repoList: repos, discoveredUser: user };
+  // Fall back to pre-baked JSON (generated from Supabase via export script)
+  loadingEl.textContent = 'Loading cached world data...';
+  try {
+    const res = await fetch('/data/default-world.json');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.repos && json.repos.length > 0) {
+        console.log(`Loaded ${json.repos.length} repos from default-world.json`);
+        return json.repos as KingdomMetrics[];
+      }
     }
-    console.warn(`No repos found for ${user}, falling back to defaults`);
+  } catch {
+    console.warn('Failed to load default-world.json');
   }
 
-  // ?repos=owner/repo,owner/repo — explicit comma-separated list
-  const reposParam = params.get('repos');
-  if (reposParam) {
-    const repos: [string, string][] = reposParam
-      .split(',')
-      .map(r => r.trim().split('/'))
-      .filter(parts => parts.length === 2)
-      .map(([owner, repo]) => [owner, repo] as [string, string]);
-    if (repos.length > 0) return { repoList: repos, discoveredUser: null };
-  }
-
-  return { repoList: DEFAULT_REPOS, discoveredUser: null };
+  return [];
 }
 
 // ─── Load sprite pack images ─────────────────────────────────
@@ -136,56 +137,6 @@ async function loadSpritePacks(): Promise<SpritePacks> {
   return packs;
 }
 
-// ─── Try loading pre-baked default world data ────────────────
-async function loadPrebakedData(): Promise<KingdomMetrics[] | null> {
-  try {
-    const res = await fetch('/data/default-world.json');
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.repos as KingdomMetrics[];
-  } catch {
-    return null;
-  }
-}
-
-// ─── Fetch all repo metrics with progress + concurrency limit ──
-async function fetchAllMetrics(
-  repoList: [string, string][],
-  onProgress: (loaded: number, total: number) => void,
-): Promise<KingdomMetrics[]> {
-  const CONCURRENCY = 15; // max simultaneous GitHub API requests
-  const allMetrics: KingdomMetrics[] = [];
-  let failCount = 0;
-  let isRateLimited = false;
-  let idx = 0;
-
-  async function worker() {
-    while (idx < repoList.length) {
-      const i = idx++;
-      const [owner, repo] = repoList[i];
-      try {
-        const m = await fetchKingdomMetrics(owner, repo);
-        allMetrics.push(m);
-        onProgress(allMetrics.length + failCount, repoList.length);
-      } catch (err) {
-        failCount++;
-        if (String(err).includes('403')) isRateLimited = true;
-        console.warn(`Failed to fetch ${owner}/${repo}: ${err}`);
-        onProgress(allMetrics.length + failCount, repoList.length);
-      }
-    }
-  }
-
-  // Launch worker pool
-  const workers = Array.from({ length: Math.min(CONCURRENCY, repoList.length) }, () => worker());
-  await Promise.all(workers);
-
-  if (failCount > 0 && isRateLimited) {
-    console.warn(`Rate limited: ${failCount}/${repoList.length} repos failed. Showing ${allMetrics.length} cached.`);
-  }
-
-  return allMetrics;
-}
 
 // ─── Title screen overlay — shown while world loads behind it ─
 function showTitleScreen(): { waitForClick: () => Promise<void>; dismiss: () => void } {
@@ -315,33 +266,10 @@ async function boot() {
   loadingEl.style.display = 'block';
   loadingEl.textContent = 'Loading kingdom data...';
 
-  const { repoList, discoveredUser } = await resolveRepos();
-
-  const universalWorld = await fetchUniversalWorld();
-  let allMetrics: KingdomMetrics[];
-
-  if (universalWorld && universalWorld.repos.length > 0) {
-    if (discoveredUser) {
-      const userMetrics = await fetchAllMetrics(repoList, (loaded, total) => {
-        loadingEl.textContent = `Summoned ${loaded}/${total} kingdoms...`;
-      });
-      const seen = new Set(universalWorld.repos.map(r => r.repo.full_name.toLowerCase()));
-      allMetrics = [
-        ...universalWorld.repos,
-        ...userMetrics.filter(m => !seen.has(m.repo.full_name.toLowerCase())),
-      ];
-    } else {
-      allMetrics = universalWorld.repos;
-    }
-  } else {
-    loadingEl.textContent = `Summoning ${repoList.length} kingdoms from GitHub...`;
-    allMetrics = await fetchAllMetrics(repoList, (loaded, total) => {
-      loadingEl.textContent = `Summoned ${loaded}/${total} kingdoms...`;
-    });
-  }
+  const allMetrics = await loadWorldData(loadingEl);
 
   if (allMetrics.length === 0) {
-    loadingEl.textContent = 'GitHub API rate limit hit. Add a token via ?token= or wait ~1 hour.';
+    loadingEl.textContent = 'No world data available. Try refreshing.';
     return;
   }
 
@@ -363,7 +291,7 @@ async function boot() {
   (window as any).__gitworld = {
     kingdoms: languageKingdoms,
     spritePacks,
-    highlightUser: discoveredUser,
+    highlightUser: null,
     focusRepo: null,
   };
   (window as any).__game = game;
@@ -373,24 +301,7 @@ async function boot() {
   game.scene.start('WorldScene', {
     kingdoms: languageKingdoms,
     spritePacks,
-    highlightUser: discoveredUser,
-  });
-}
-
-// ─── Load default world metrics (try pre-baked first) ────────
-async function loadDefaultMetrics(loadingEl: HTMLElement): Promise<KingdomMetrics[]> {
-  // Try pre-baked data first (zero API calls)
-  loadingEl.textContent = 'Loading kingdom data...';
-  const prebaked = await loadPrebakedData();
-  if (prebaked && prebaked.length > 0) {
-    loadingEl.textContent = `Loaded ${prebaked.length} kingdoms from cache...`;
-    return prebaked;
-  }
-
-  // Fall back to live API
-  loadingEl.textContent = `Summoning ${DEFAULT_REPOS.length} kingdoms from GitHub...`;
-  return fetchAllMetrics(DEFAULT_REPOS, (loaded, total) => {
-    loadingEl.textContent = `Summoned ${loaded}/${total} kingdoms...`;
+    highlightUser: null,
   });
 }
 
@@ -404,35 +315,14 @@ async function bootDirect(
   const modal = document.getElementById('entry-modal');
   if (modal) modal.style.display = 'none';
 
-  const { repoList, discoveredUser } = await resolveRepos();
+  // Determine the username from URL route (e.g. /facebook or /facebook/react)
+  const highlightUser = params.get('user') || params.get('org') || null;
 
-  // Try universal world API first — merge with discovered user's repos
-  loadingEl.textContent = 'Loading universal world...';
-  const universalWorld = await fetchUniversalWorld();
-  let allMetrics: KingdomMetrics[];
-
-  if (universalWorld && universalWorld.repos.length > 0) {
-    if (discoveredUser) {
-      const userMetrics = await fetchAllMetrics(repoList, (loaded, total) => {
-        loadingEl.textContent = `Summoned ${loaded}/${total} kingdoms...`;
-      });
-      const seen = new Set(universalWorld.repos.map(r => r.repo.full_name.toLowerCase()));
-      allMetrics = [
-        ...universalWorld.repos,
-        ...userMetrics.filter(m => !seen.has(m.repo.full_name.toLowerCase())),
-      ];
-    } else {
-      allMetrics = universalWorld.repos;
-    }
-  } else {
-    loadingEl.textContent = `Summoning ${repoList.length} kingdoms from GitHub...`;
-    allMetrics = await fetchAllMetrics(repoList, (loaded, total) => {
-      loadingEl.textContent = `Summoned ${loaded}/${total} kingdoms...`;
-    });
-  }
+  // Load world data from Supabase or pre-baked JSON (no GitHub API calls)
+  const allMetrics = await loadWorldData(loadingEl);
 
   if (allMetrics.length === 0) {
-    loadingEl.textContent = 'GitHub API rate limit hit. Add a token via ?token= or wait ~1 hour.';
+    loadingEl.textContent = 'No world data available. Try refreshing.';
     return;
   }
 
@@ -461,21 +351,21 @@ async function bootDirect(
   game.scene.add('WorldScene', WorldScene, true, {
     kingdoms: languageKingdoms,
     spritePacks,
-    highlightUser: discoveredUser,
+    highlightUser,
   });
   game.scene.add('CityScene', CityScene, false);
 
   (window as any).__gitworld = {
     kingdoms: languageKingdoms,
     spritePacks,
-    highlightUser: discoveredUser,
+    highlightUser,
     focusRepo: focusRepo || null,
   };
   (window as any).__game = game;
 
   // Deep link: /owner/repo → jump straight into the city containing that repo
-  if (focusRepo && discoveredUser) {
-    const fullName = `${discoveredUser}/${focusRepo}`;
+  if (focusRepo && highlightUser) {
+    const fullName = `${highlightUser}/${focusRepo}`;
     const targetKingdom = languageKingdoms.find(k =>
       k.repos.some(r => r.repo.full_name.toLowerCase() === fullName.toLowerCase())
     );
@@ -483,12 +373,12 @@ async function bootDirect(
       game.scene.start('CityScene', {
         kingdom: targetKingdom,
         spritePacks,
-        highlightUser: discoveredUser,
+        highlightUser,
         focusRepo: fullName,
         returnData: {
           kingdoms: languageKingdoms,
           spritePacks,
-          highlightUser: discoveredUser,
+          highlightUser,
         },
       });
       console.log(`[Deep link] Jumping to ${targetKingdom.language} city for ${fullName}`);
