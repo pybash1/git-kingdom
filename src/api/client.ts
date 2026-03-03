@@ -34,7 +34,7 @@ export async function fetchCurrentUser(): Promise<AuthUser | null> {
  * Redirect to GitHub OAuth sign-in.
  */
 export function signInWithGitHub() {
-  window.location.href = '/api/auth/github';
+  window.location.href = '/api/auth/login';
 }
 
 /**
@@ -55,8 +55,8 @@ export async function fetchUniversalWorld(): Promise<WorldData | null> {
   try {
     const res = await fetch('/api/world');
     if (!res.ok) { worldCache = null; return null; }
-    worldCache = await res.json();
-    return worldCache;
+    worldCache = (await res.json()) as WorldData;
+    return worldCache ?? null;
   } catch {
     worldCache = null;
     return null;

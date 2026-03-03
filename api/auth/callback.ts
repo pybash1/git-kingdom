@@ -1,86 +1,42 @@
 /**
  * GET /api/auth/callback
- * GitHub redirects here after the user approves the OAuth request.
- * Exchanges the code for a token, fetches user info, sets encrypted session cookie.
+ * Supabase Auth redirects here after GitHub approval.
+ * Exchanges the code for a session, upserts user into our users table.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { setSession } from '../lib/session';
+import { createServerClient, createServiceClient } from '../lib/supabase';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { code, state } = req.query;
-
-  if (!code || typeof code !== 'string') {
+  const code = req.query.code as string;
+  if (!code) {
     return res.status(400).json({ error: 'Missing authorization code' });
   }
 
-  // Verify CSRF state
-  const expectedState = req.cookies?.gk_oauth_state;
-  if (!expectedState || state !== expectedState) {
-    return res.status(403).json({ error: 'Invalid OAuth state (CSRF check failed)' });
+  const supabase = createServerClient(req, res);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (error || !data.session) {
+    console.error('[/api/auth/callback] Session exchange failed:', error?.message);
+    return res.status(400).json({ error: error?.message || 'Session exchange failed' });
   }
 
-  // Clear the state cookie
-  const isSecure = !!process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'development';
-  res.setHeader('Set-Cookie', [
-    `gk_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${isSecure ? '; Secure' : ''}`,
-  ]);
-
-  const clientId = process.env.GITHUB_CLIENT_ID;
-  const clientSecret = process.env.GITHUB_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
-    return res.status(500).json({ error: 'OAuth credentials not configured' });
-  }
+  // Upsert user into our users table
+  const meta = data.session.user.user_metadata;
+  const login = meta.user_name || meta.preferred_username || '';
+  const githubId = meta.provider_id || meta.sub;
 
   try {
-    // Exchange code for access token
-    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        client_id: clientId,
-        client_secret: clientSecret,
-        code,
-      }),
-    });
-
-    const tokenData = await tokenRes.json();
-    if (tokenData.error || !tokenData.access_token) {
-      console.error('Token exchange failed:', { error: tokenData.error, description: tokenData.error_description });
-      return res.status(400).json({ error: tokenData.error_description || 'Token exchange failed' });
-    }
-
-    const accessToken = tokenData.access_token as string;
-
-    // Fetch user info from GitHub
-    const userRes = await fetch('https://api.github.com/user', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-    });
-
-    if (!userRes.ok) {
-      return res.status(502).json({ error: 'Failed to fetch GitHub user info' });
-    }
-
-    const user = await userRes.json();
-
-    // Set encrypted session cookie (includes issued_at for expiry checks)
-    setSession(res, {
-      login: user.login,
-      github_id: user.id,
-      avatar_url: user.avatar_url,
-      token: accessToken,
-      issued_at: Date.now(),
-    });
-
-    // Redirect to the user's kingdom page
-    res.redirect(302, `/${user.login}`);
+    const service = createServiceClient();
+    await service.from('users').upsert({
+      id: data.session.user.id,
+      github_id: typeof githubId === 'string' ? parseInt(githubId, 10) : githubId,
+      login,
+      avatar_url: meta.avatar_url,
+    }, { onConflict: 'id' });
   } catch (err: any) {
-    console.error('OAuth callback error:', err?.message || 'Unknown error');
-    res.status(500).json({ error: 'Internal error during authentication' });
+    console.error('[/api/auth/callback] User upsert failed:', err?.message);
+    // Non-fatal — user can still use the app
   }
+
+  res.redirect(302, `/${login}`);
 }

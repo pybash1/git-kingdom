@@ -1,70 +1,97 @@
 /**
  * POST /api/world/join
  * Authenticated user joins the universal world.
- * Fetches their qualifying repos from GitHub and adds them to the world snapshot.
- * Rate-limited to 5 joins per user per hour.
+ * Fetches their repos from GitHub, upserts into Supabase Postgres.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSession, isValidGitHubUsername } from '../lib/session';
-import { registerUser, setUserRepos, rebuildWorldSnapshot } from '../lib/kv';
+import { createServerClient, createServiceClient } from '../lib/supabase';
 import { fetchUserReposAsMetrics } from '../lib/github-server';
-import { kv } from '@vercel/kv';
-
-const RATE_LIMIT_WINDOW = 3600; // 1 hour in seconds
-const RATE_LIMIT_MAX = 5;       // max joins per window
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const session = getSession(req);
-  if (!session) {
+  // Check auth via Supabase session
+  const supabase = createServerClient(req, res);
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
     return res.status(401).json({ error: 'Not signed in' });
   }
 
-  // Validate username format
-  if (!isValidGitHubUsername(session.login)) {
-    return res.status(400).json({ error: 'Invalid username' });
+  const meta = user.user_metadata;
+  const login = meta.user_name || meta.preferred_username;
+  if (!login) {
+    return res.status(400).json({ error: 'Invalid user metadata' });
   }
 
   try {
-    // Rate limit by user
-    const rlKey = `ratelimit:join:${session.login}`;
-    const count = await kv.incr(rlKey);
-    if (count === 1) await kv.expire(rlKey, RATE_LIMIT_WINDOW);
-    if (count > RATE_LIMIT_MAX) {
-      return res.status(429).json({ error: 'Rate limited — try again later' });
+    const service = createServiceClient();
+
+    // Use server-side GitHub token for API calls
+    const githubToken = process.env.GITHUB_TOKEN;
+    if (!githubToken) {
+      return res.status(500).json({ error: 'Server GitHub token not configured' });
     }
 
-    // Register the user
-    await registerUser({
-      login: session.login,
-      github_id: session.github_id,
-      avatar_url: session.avatar_url,
-      joined_at: new Date().toISOString(),
-    });
+    // Fetch user's repos from GitHub (1 API call, no per-repo fetches)
+    const metrics = await fetchUserReposAsMetrics(login, githubToken, 100, 0);
+    console.log(`[join] ${login}: found ${metrics.length} repos`);
 
-    // Fetch repos directly from listing — 1 API call, no per-repo fetches.
-    // Contributors are left empty and fetched lazily when entering a city.
-    const metrics = await fetchUserReposAsMetrics(session.login, session.token, 100, 0);
-    console.log(`[join] ${session.login}: found ${metrics.length} repos`);
+    let addedRepos = 0;
 
-    if (metrics.length > 0) {
-      await setUserRepos(session.login, metrics);
+    for (const m of metrics) {
+      // Upsert each repo
+      const { data: repo, error: repoErr } = await service.from('repos').upsert({
+        full_name: m.repo.full_name.toLowerCase(),
+        name: m.repo.name,
+        owner_login: m.repo.owner?.login || login,
+        owner_avatar: m.repo.owner?.avatar_url || meta.avatar_url,
+        description: m.repo.description,
+        language: m.repo.language,
+        stargazers: m.repo.stargazers_count,
+        forks: m.repo.forks_count,
+        open_issues: m.repo.open_issues_count,
+        size_kb: m.repo.size || 0,
+        created_at: m.repo.created_at,
+        pushed_at: m.repo.updated_at,
+        topics: m.repo.topics || [],
+        total_commits: m.totalCommits,
+        merged_prs: Math.floor(m.totalCommits * 0.3),
+        king_login: m.king?.login || null,
+        king_avatar: m.king?.avatar_url || null,
+        king_contributions: m.king?.contributions || 0,
+        fetched_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'full_name' }).select('id').single();
+
+      if (repoErr || !repo) {
+        console.warn(`[join] Failed to upsert ${m.repo.full_name}:`, repoErr?.message);
+        continue;
+      }
+
+      // Link user to repo
+      await service.from('user_repos').upsert({
+        user_id: user.id,
+        repo_id: repo.id,
+      }, { onConflict: 'user_id,repo_id' }).catch(() => {});
+
+      addedRepos++;
     }
 
-    // Rebuild the universal world snapshot (deduplicates by full_name)
-    const snapshot = await rebuildWorldSnapshot();
+    // Count totals for response
+    const { count: totalRepos } = await service.from('repos').select('*', { count: 'exact', head: true });
+    const { count: totalUsers } = await service.from('users').select('*', { count: 'exact', head: true });
 
     res.json({
       ok: true,
-      addedRepos: metrics.length,
-      totalWorldRepos: snapshot.repos.length,
-      totalWorldUsers: snapshot.users.length,
+      addedRepos,
+      totalWorldRepos: totalRepos || 0,
+      totalWorldUsers: totalUsers || 0,
     });
   } catch (err: any) {
-    console.error(`[join] Error for ${session.login}:`, err?.message || 'Unknown error');
+    console.error(`[join] Error for ${login}:`, err?.message);
     res.status(500).json({ error: 'Failed to join world' });
   }
 }

@@ -1,22 +1,25 @@
 /**
  * GET /api/auth/me
- * Returns the currently signed-in user from the session cookie.
+ * Returns the currently signed-in user from Supabase Auth session.
  * Returns 401 if not signed in.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSession } from '../lib/session';
+import { createServerClient } from '../lib/supabase';
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
-  const session = getSession(req);
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const supabase = createServerClient(req, res);
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return res.status(401).json({ error: 'Not signed in' });
   }
 
-  // Return user info (never expose the token to the client)
+  const meta = user.user_metadata;
+
+  // Return user info (never expose the access token)
   res.json({
-    login: session.login,
-    github_id: session.github_id,
-    avatar_url: session.avatar_url,
+    login: meta.user_name || meta.preferred_username,
+    github_id: meta.provider_id || meta.sub,
+    avatar_url: meta.avatar_url,
   });
 }

@@ -853,7 +853,7 @@ export class WorldScene extends Phaser.Scene {
     if (rightEl) {
       rightEl.innerHTML =
         `<input type="text" id="hdr-search" placeholder="Search world..." />` +
-        `<span id="hdr-auth"><a href="/api/auth/github" class="hdr-auth-link" id="hdr-signin">Sign in</a></span>`;
+        `<span id="hdr-auth"><a href="/api/auth/login" class="hdr-auth-link" id="hdr-signin">Sign in</a></span>`;
 
       // Restore auth state if user is already signed in
       const gkUser = (window as any).__gkUser;

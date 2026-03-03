@@ -1,14 +1,17 @@
 /**
  * POST /api/auth/logout
- * Clears the session cookie and redirects to home.
+ * Signs out via Supabase Auth (clears session cookies) and redirects to home.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { clearSession } from '../lib/session';
+import { createServerClient } from '../lib/supabase';
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  clearSession(res);
+
+  const supabase = createServerClient(req, res);
+  await supabase.auth.signOut();
+
   res.redirect(302, '/');
 }
