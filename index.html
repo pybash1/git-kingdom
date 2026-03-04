@@ -770,6 +770,9 @@
         </div>
       </div>
       <div id="profile-repos"></div>
+      <div id="profile-actions" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.15);text-align:center;">
+        <a id="profile-signout" href="#" style="font-size:9px;color:#c0a070;text-decoration:underline;cursor:pointer;">Sign out</a>
+      </div>
     </div>
 
   </div><!-- end rpgui-overlay -->
@@ -831,6 +834,14 @@
       document.getElementById('profile-panel').style.display = 'none';
     });
 
+    // Sign out button
+    document.getElementById('profile-signout').addEventListener('click', function(e) {
+      e.preventDefault();
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+        .then(function() { window.location.reload(); })
+        .catch(function() { window.location.reload(); });
+    });
+
     // ─── GitHub OAuth: check auth on load → update header ───
     (function checkAuth() {
       fetch('/api/auth/me', { credentials: 'include' })
@@ -849,7 +860,7 @@
             avatar.title = user.login;
             var nameSpan = document.createElement('span');
             nameSpan.className = 'hdr-auth-name';
-            nameSpan.title = 'View your kingdom';
+            nameSpan.title = 'View your repos';
             nameSpan.textContent = user.login;
             authEl.appendChild(avatar);
             authEl.appendChild(document.createTextNode(' '));
