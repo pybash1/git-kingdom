@@ -81,6 +81,7 @@ interface SeoMeta {
   title: string;
   description: string;
   url: string;
+  ogImage?: string;
   jsonLd?: object;
 }
 
@@ -120,6 +121,18 @@ function injectMeta(html: string, meta: SeoMeta): string {
     `<meta property="og:url" content="${esc(meta.url)}" />`,
   );
 
+  // Replace OG image
+  if (meta.ogImage) {
+    result = result.replace(
+      `<meta property="og:image" content="https://gitkingdom.dev/api/og" />`,
+      `<meta property="og:image" content="${esc(meta.ogImage)}" />`,
+    );
+    result = result.replace(
+      `<meta name="twitter:image" content="https://gitkingdom.dev/api/og" />`,
+      `<meta name="twitter:image" content="${esc(meta.ogImage)}" />`,
+    );
+  }
+
   // Replace Twitter tags
   result = result.replace(
     `<meta name="twitter:title" content="${DEFAULTS.title}" />`,
@@ -155,9 +168,19 @@ function formatStars(n: number): string {
   return n.toString();
 }
 
+// ─── Minimal fallback HTML (if index.html can't be loaded) ───
+const FALLBACK_HTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0;url=/index.html"><title>Git Kingdom</title></head><body></body></html>`;
+
 // ─── Route handler ───────────────────────────────────────────
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const html = await getBaseHtml(req);
+  let html: string;
+  try {
+    html = await getBaseHtml(req);
+  } catch (e: any) {
+    console.error('[/api/page] Failed to load index.html:', e?.message);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(FALLBACK_HTML);
+  }
   const path = (req.url || '/').split('?')[0].replace(/\/+$/, '') || '/';
   const segments = path.split('/').filter(Boolean);
 
@@ -196,10 +219,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ? `${repo.description} | ${stars} stars in the ${lang} Kingdom on Git Kingdom.`
           : `${repo.full_name} has ${stars} stars in the ${lang} Kingdom on Git Kingdom.`;
 
+        const ogParams = new URLSearchParams({
+          title: repo.full_name,
+          stars: formatStars(repo.stargazers),
+          lang: lang,
+          ...(repo.description ? { desc: repo.description.substring(0, 120) } : {}),
+        });
         const meta: SeoMeta = {
           title: `${repo.full_name} | Git Kingdom`,
           description: desc.substring(0, 160),
           url: `${baseUrl}/${repo.full_name}`,
+          ogImage: `${baseUrl}/api/og?${ogParams}`,
           jsonLd: {
             '@context': 'https://schema.org',
             '@type': 'SoftwareSourceCode',
@@ -243,10 +273,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ? ` Top castle: ${topRepo.full_name} with ${formatStars(topRepo.stargazers)} stars.`
           : '';
 
+        const langOgParams = new URLSearchParams({
+          title: `${langDisplay} Kingdom`,
+          subtitle: `${repoCount} repos`,
+          ...(topRepo ? { desc: `Top castle: ${topRepo.full_name} (${formatStars(topRepo.stargazers)} stars)` } : {}),
+        });
         const meta: SeoMeta = {
           title: `${langDisplay} Kingdom | Git Kingdom`,
           description: `Explore ${repoCount} ${langDisplay} repos as pixel-art buildings in a fantasy RPG city.${topInfo}`.substring(0, 160),
           url: `${baseUrl}/${first}`,
+          ogImage: `${baseUrl}/api/og?${langOgParams}`,
           jsonLd: {
             '@context': 'https://schema.org',
             '@type': 'CollectionPage',
@@ -276,10 +312,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const topRepoNames = userRepos.slice(0, 3).map(r => r.full_name.split('/')[1]).join(', ');
         const totalStars = userRepos.reduce((s, r) => s + r.stargazers, 0);
 
+        const userOgParams = new URLSearchParams({
+          title: segments[0],
+          subtitle: `${formatStars(totalStars)} total stars`,
+          desc: `Top repos: ${topRepoNames}`,
+        });
         const meta: SeoMeta = {
           title: `${segments[0]} | Git Kingdom`,
           description: `Explore ${segments[0]}'s repos on Git Kingdom: ${topRepoNames}. ${formatStars(totalStars)} total stars across ${userRepos.length}+ projects.`.substring(0, 160),
           url: `${baseUrl}/${segments[0]}`,
+          ogImage: `${baseUrl}/api/og?${userOgParams}`,
           jsonLd: {
             '@context': 'https://schema.org',
             '@type': 'ProfilePage',
@@ -306,9 +348,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (err: any) {
     console.error('[/api/page] Error:', err?.message);
-    // On any error, still serve the page — just with default meta
+    // On any error, still serve the page with default meta
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, s-maxage=60');
-    return res.send(html);
+    return res.send(html || FALLBACK_HTML);
   }
 }
