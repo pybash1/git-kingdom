@@ -72,10 +72,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       // Link user to repo
-      await service.from('user_repos').upsert({
-        user_id: user.id,
-        repo_id: repo.id,
-      }, { onConflict: 'user_id,repo_id' }).catch(() => {});
+      try {
+        await service.from('user_repos').upsert({
+          user_id: user.id,
+          repo_id: repo.id,
+        }, { onConflict: 'user_id,repo_id' });
+      } catch { /* ignore duplicate */ }
 
       addedRepos++;
     }
