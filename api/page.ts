@@ -12,7 +12,7 @@
  *   /facebook/react    → repo page (query Supabase for metadata)
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 import { createClient } from '@supabase/supabase-js';
 
@@ -34,10 +34,10 @@ const DEFAULTS = {
 // ─── Read built index.html once, reuse across invocations ────
 let cachedHtml: string | null = null;
 
-async function getBaseHtml(req: VercelRequest): Promise<string> {
+function getBaseHtml(): string {
   if (cachedHtml) return cachedHtml;
 
-  // Try reading from filesystem first (various Vercel paths)
+  // Try reading from filesystem (includeFiles bundles dist/index.html with function)
   const candidates = [
     join(process.cwd(), 'dist', 'index.html'),
     join(process.cwd(), 'index.html'),
@@ -45,23 +45,16 @@ async function getBaseHtml(req: VercelRequest): Promise<string> {
     join(__dirname, '..', 'index.html'),
   ];
   for (const p of candidates) {
-    if (existsSync(p)) {
-      cachedHtml = readFileSync(p, 'utf-8');
-      return cachedHtml;
-    }
+    try {
+      const content = readFileSync(p, 'utf-8');
+      if (content.includes('<!DOCTYPE html') || content.includes('<html')) {
+        cachedHtml = content;
+        return cachedHtml;
+      }
+    } catch { /* try next */ }
   }
 
-  // Fallback: fetch over HTTP from same deployment
-  const proto = req.headers['x-forwarded-proto'] || 'https';
-  const host = req.headers['x-forwarded-host'] || req.headers.host || 'gitkingdom.dev';
-  const url = `${proto}://${host}/index.html`;
-  const res = await fetch(url);
-  if (res.ok) {
-    cachedHtml = await res.text();
-    return cachedHtml;
-  }
-
-  throw new Error('Could not load index.html');
+  throw new Error(`Could not load index.html from any candidate path`);
 }
 
 // ─── Supabase client (lazy, reused across invocations) ───────
@@ -175,7 +168,7 @@ const FALLBACK_HTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta ht
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   let html: string;
   try {
-    html = await getBaseHtml(req);
+    html = getBaseHtml();
   } catch (e: any) {
     console.error('[/api/page] Failed to load index.html:', e?.message);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

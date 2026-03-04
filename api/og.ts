@@ -8,14 +8,13 @@
  *   (no params) → homepage card
  */
 import { ImageResponse } from '@vercel/og';
-import type { VercelRequest } from '@vercel/node';
 
 export const config = {
   runtime: 'edge',
 };
 
-export default async function handler(req: VercelRequest) {
-  const { searchParams } = new URL(req.url || '', 'https://gitkingdom.dev');
+export default async function handler(req: Request) {
+  const { searchParams } = new URL(req.url, 'https://gitkingdom.dev');
 
   const title = searchParams.get('title') || 'Git Kingdom';
   const subtitle = searchParams.get('subtitle') || '';
