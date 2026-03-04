@@ -14,7 +14,7 @@ export const config = {
 };
 
 export default async function handler(req: Request) {
-  const { searchParams } = new URL(req.url, 'https://gitkingdom.dev');
+  const { searchParams } = new URL(req.url, 'https://gitkingdom.com');
 
   const title = searchParams.get('title') || 'Git Kingdom';
   const subtitle = searchParams.get('subtitle') || '';
@@ -259,7 +259,7 @@ export default async function handler(req: Request) {
                 color: '#5a4a2a',
                 letterSpacing: '1px',
               },
-              children: 'gitkingdom.dev',
+              children: 'gitkingdom.com',
             },
           },
         ].filter(Boolean),

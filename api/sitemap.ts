@@ -8,7 +8,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const BASE_URL = 'https://gitkingdom.dev';
+const BASE_URL = 'https://gitkingdom.com';
 
 // Languages that form kingdoms (lowercase slugs)
 const LANGUAGE_SLUGS = [

@@ -3,4 +3,4 @@ Allow: /
 Disallow: /api/
 Disallow: /editor.html
 
-Sitemap: https://gitkingdom.dev/sitemap.xml
+Sitemap: https://gitkingdom.com/sitemap.xml

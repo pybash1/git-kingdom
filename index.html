@@ -9,6 +9,11 @@
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-6CD0PBPX4X', { send_page_view: false });
+    // Redirect OAuth code to callback endpoint if it arrives at root
+    (function() {
+      var code = new URLSearchParams(window.location.search).get('code');
+      if (code) window.location.replace('/api/auth/callback?code=' + encodeURIComponent(code));
+    })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Git Kingdom | Explore GitHub as a Fantasy RPG World</title>
@@ -16,27 +21,27 @@
   <meta name="keywords" content="GitHub, visualization, RPG, pixel art, open source, repos, game, kingdom, retro" />
   <meta name="author" content="Git Kingdom" />
   <meta name="theme-color" content="#1a1a2e" />
-  <link rel="canonical" href="https://gitkingdom.dev/" />
+  <link rel="canonical" href="https://gitkingdom.com/" />
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Git Kingdom" />
   <meta property="og:title" content="Git Kingdom | Explore GitHub as a Fantasy RPG World" />
   <meta property="og:description" content="Visualize any GitHub profile as a pixel-art fantasy kingdom. Repos become buildings, contributors become walking citizens, and programming languages become kingdoms." />
-  <meta property="og:image" content="https://gitkingdom.dev/api/og" />
-  <meta property="og:url" content="https://gitkingdom.dev/" />
+  <meta property="og:image" content="https://gitkingdom.com/api/og" />
+  <meta property="og:url" content="https://gitkingdom.com/" />
   <meta property="og:locale" content="en_US" />
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Git Kingdom | Explore GitHub as a Fantasy RPG World" />
   <meta name="twitter:description" content="Visualize any GitHub profile as a pixel-art fantasy kingdom. Repos become buildings, contributors become walking citizens, and programming languages become kingdoms." />
-  <meta name="twitter:image" content="https://gitkingdom.dev/api/og" />
+  <meta name="twitter:image" content="https://gitkingdom.com/api/og" />
   <!-- Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "Git Kingdom",
-    "url": "https://gitkingdom.dev/",
+    "url": "https://gitkingdom.com/",
     "description": "Visualize any GitHub profile as a pixel-art fantasy kingdom. Repos become buildings, contributors become walking citizens, and programming languages become kingdoms.",
     "applicationCategory": "DeveloperApplication",
     "operatingSystem": "Web",

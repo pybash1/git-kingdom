@@ -28,7 +28,7 @@ const LANGUAGES: Record<string, string> = {
 const DEFAULTS = {
   title: 'Git Kingdom | Explore GitHub as a Fantasy RPG World',
   description: 'Visualize any GitHub profile as a pixel-art fantasy kingdom. Repos become buildings, contributors become walking citizens, and programming languages become kingdoms.',
-  url: 'https://gitkingdom.dev/',
+  url: 'https://gitkingdom.com/',
 };
 
 // ─── Read built index.html once, reuse across invocations ────
@@ -114,11 +114,11 @@ function injectMeta(html: string, meta: SeoMeta): string {
   // Replace OG image
   if (meta.ogImage) {
     result = result.replace(
-      `<meta property="og:image" content="https://gitkingdom.dev/api/og" />`,
+      `<meta property="og:image" content="https://gitkingdom.com/api/og" />`,
       `<meta property="og:image" content="${esc(meta.ogImage)}" />`,
     );
     result = result.replace(
-      `<meta name="twitter:image" content="https://gitkingdom.dev/api/og" />`,
+      `<meta name="twitter:image" content="https://gitkingdom.com/api/og" />`,
       `<meta name="twitter:image" content="${esc(meta.ogImage)}" />`,
     );
   }
@@ -191,7 +191,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const db = getSupabase();
-    const baseUrl = 'https://gitkingdom.dev';
+    const baseUrl = 'https://gitkingdom.com';
 
     // ── Two-segment path: /owner/repo ──
     if (segments.length >= 2) {
