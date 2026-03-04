@@ -12,7 +12,7 @@
  *   /facebook/react    → repo page (query Supabase for metadata)
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { createClient } from '@supabase/supabase-js';
 
@@ -34,16 +34,34 @@ const DEFAULTS = {
 // ─── Read built index.html once, reuse across invocations ────
 let cachedHtml: string | null = null;
 
-function getBaseHtml(): string {
+async function getBaseHtml(req: VercelRequest): Promise<string> {
   if (cachedHtml) return cachedHtml;
-  // In Vercel production, the built output is in the same deployment
-  // Try dist/ first (production build), fall back to source index.html
-  try {
-    cachedHtml = readFileSync(join(process.cwd(), 'dist', 'index.html'), 'utf-8');
-  } catch {
-    cachedHtml = readFileSync(join(process.cwd(), 'index.html'), 'utf-8');
+
+  // Try reading from filesystem first (various Vercel paths)
+  const candidates = [
+    join(process.cwd(), 'dist', 'index.html'),
+    join(process.cwd(), 'index.html'),
+    join(__dirname, '..', 'dist', 'index.html'),
+    join(__dirname, '..', 'index.html'),
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) {
+      cachedHtml = readFileSync(p, 'utf-8');
+      return cachedHtml;
+    }
   }
-  return cachedHtml;
+
+  // Fallback: fetch over HTTP from same deployment
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'gitkingdom.dev';
+  const url = `${proto}://${host}/index.html`;
+  const res = await fetch(url);
+  if (res.ok) {
+    cachedHtml = await res.text();
+    return cachedHtml;
+  }
+
+  throw new Error('Could not load index.html');
 }
 
 // ─── Supabase client (lazy, reused across invocations) ───────
@@ -139,7 +157,7 @@ function formatStars(n: number): string {
 
 // ─── Route handler ───────────────────────────────────────────
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const html = getBaseHtml();
+  const html = await getBaseHtml(req);
   const path = (req.url || '/').split('?')[0].replace(/\/+$/, '') || '/';
   const segments = path.split('/').filter(Boolean);
 

@@ -4,6 +4,7 @@
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/index.html", "destination": "/index.html" },
     { "source": "/editor.html", "destination": "/editor.html" },
     { "source": "/:path*", "destination": "/api/page" }
   ]
