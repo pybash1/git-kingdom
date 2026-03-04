@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Fetch user's repos from GitHub (1 API call, no per-repo fetches)
-    const metrics = await fetchUserReposAsMetrics(login, githubToken, 100, 0);
+    const metrics = await fetchUserReposAsMetrics(login, githubToken, 100, 1);
     console.log(`[join] ${login}: found ${metrics.length} repos`);
 
     let addedRepos = 0;

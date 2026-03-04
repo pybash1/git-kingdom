@@ -370,17 +370,7 @@ export class CityScene extends Phaser.Scene {
         label.setDepth(10);
         this.buildingLabels.push({ text: label, rank: b.rank, buildingIndex: bi });
 
-        // Gold glow ring for user's buildings
-        if (isUserRepo) {
-          const ring = this.add.circle(
-            (b.x + b.width / 2) * TILE_SIZE,
-            (b.y + b.height / 2) * TILE_SIZE,
-            Math.max(b.width, b.height) * TILE_SIZE * 0.7,
-            0xffd700, 0
-          );
-          ring.setStrokeStyle(2, 0xffd700, 0.8);
-          ring.setDepth(9);
-        }
+        // User's buildings: just the gold label (no circle ring)
       }
 
       // ── Hover tooltip (shown when mousing over any building) ──
@@ -1406,7 +1396,7 @@ export class CityScene extends Phaser.Scene {
         : `Public building in the ${this.city.language} Kingdom`;
       document.getElementById('info-stats')!.innerHTML = isFiller
         ? stat('Status', 'Available') + stat('Size', `${b.width}×${b.height} tiles`) +
-          '<div style="font-size:9px;color:#8a8070;margin-top:6px"><a href="/api/auth/login" class="gh-link">Claim your repos</a> with GitHub to fill this plot!</div>'
+          '<div style="font-size:9px;color:#8a8070;margin-top:6px"><a href="/api/auth/login" class="gh-link">Claim your repos</a> with GitHub to fill this plot! Repos need at least 1 star.</div>'
         : stat('Type', b.publicName || 'Civic') + stat('Size', `${b.width}×${b.height} tiles`);
       document.getElementById('info-king')!.innerHTML = '';
       if ((window as any).__resetPanelPos) (window as any).__resetPanelPos(panel);
