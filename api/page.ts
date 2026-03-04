@@ -13,8 +13,7 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { createClient } from '@supabase/supabase-js';
 
 // ─── Known languages (lowercase → display name) ─────────────
@@ -38,15 +37,9 @@ let cachedHtml: string | null = null;
 function getBaseHtml(): string {
   if (cachedHtml) return cachedHtml;
 
-  // ESM-compatible __dirname
-  let dir: string;
-  try { dir = dirname(fileURLToPath(import.meta.url)); } catch { dir = process.cwd(); }
-
   const candidates = [
     join(process.cwd(), 'dist', 'index.html'),
     join(process.cwd(), 'index.html'),
-    join(dir, '..', 'dist', 'index.html'),
-    join(dir, '..', 'index.html'),
   ];
   for (const p of candidates) {
     try {
@@ -58,7 +51,7 @@ function getBaseHtml(): string {
     } catch { /* try next */ }
   }
 
-  throw new Error(`Could not load index.html from any candidate path`);
+  throw new Error('Could not load index.html');
 }
 
 // ─── Supabase client (lazy, reused across invocations) ───────
