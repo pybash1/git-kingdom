@@ -3,7 +3,7 @@ import { LanguageKingdom, CityInterior, CityBuilding, TILES } from '../types';
 import { generateTileset, TILE_SIZE, TILESET_MARGIN, TILESET_SPACING, SpritePacks, GRASS_B_FRAMES, GRASS_FLOWER_FRAMES, TREE_DEFS, TOWN_B_DECO, createBuildingTextures, getBuildingTextureKey, loadTemplateLibrary, createTemplateVariantTextures, pickBuildingTextureKey, VariantEntry } from '../generators/TilesetGenerator';
 import { generateCityInterior, placePublicBuildings } from '../generators/CityGenerator';
 import { expandTemplateVariations } from '../editor/VariationEngine';
-import { trackBuildingClicked, trackCitizenClicked, trackCityExited, trackWorldSearch, trackPageView } from '../analytics';
+import { trackBuildingClicked, trackCitizenClicked, trackCityExited, trackPageView } from '../analytics';
 
 // Stepped zoom levels for crisp pixel-art rendering (retro style)
 const CITY_ZOOM_LEVELS = [0.5, 0.75, 1, 1.5, 2, 3, 4, 5];
@@ -1350,6 +1350,9 @@ export class CityScene extends Phaser.Scene {
       contributions: citizen.totalContributions,
     });
 
+    // Hide profile panel (they share screen space)
+    document.getElementById('profile-panel')!.style.display = 'none';
+
     const panel = document.getElementById('info-panel')!;
     const isKing = this.city.king?.login === c.login;
     const isUser = this.highlightUser === c.login.toLowerCase();
@@ -1386,6 +1389,9 @@ export class CityScene extends Phaser.Scene {
   }
 
   private showBuildingInfo(b: CityBuilding) {
+    // Hide profile panel (they share screen space)
+    document.getElementById('profile-panel')!.style.display = 'none';
+
     // Public buildings show a simple info card
     if (b.isPublic || !b.repoMetrics) {
       const panel = document.getElementById('info-panel')!;
@@ -1400,7 +1406,7 @@ export class CityScene extends Phaser.Scene {
         : `Public building in the ${this.city.language} Kingdom`;
       document.getElementById('info-stats')!.innerHTML = isFiller
         ? stat('Status', 'Available') + stat('Size', `${b.width}×${b.height} tiles`) +
-          '<div style="font-size:9px;color:#8a8070;margin-top:6px">Sign in with GitHub to claim this plot with your repo!</div>'
+          '<div style="font-size:9px;color:#8a8070;margin-top:6px"><a href="/api/auth/login" class="gh-link">Claim your repos</a> with GitHub to fill this plot!</div>'
         : stat('Type', b.publicName || 'Civic') + stat('Size', `${b.width}×${b.height} tiles`);
       document.getElementById('info-king')!.innerHTML = '';
       if ((window as any).__resetPanelPos) (window as any).__resetPanelPos(panel);
@@ -1605,8 +1611,7 @@ export class CityScene extends Phaser.Scene {
     if (rightEl) {
       rightEl.innerHTML =
         `<span class="header-stat header-clickable" id="hdr-citizens-btn"><span class="stat-icon">👥</span> <span>${citizenCount}</span> Citizens</span>` +
-        `<input type="text" id="hdr-search" placeholder="Search world..." />` +
-        `<span id="hdr-auth"><a href="/api/auth/login" class="hdr-auth-link" id="hdr-signin">Sign in</a></span>`;
+        `<span id="hdr-auth"><a href="/api/auth/login" class="hdr-auth-link" id="hdr-signin"><span class="auth-long">Claim your repos</span><span class="auth-short">Claim</span></a></span>`;
 
       // Restore auth state if user is already signed in
       const gkUser = (window as any).__gkUser;
@@ -1620,64 +1625,14 @@ export class CityScene extends Phaser.Scene {
         avatar.title = gkUser.login;
         const nameSpan = document.createElement('span');
         nameSpan.className = 'hdr-auth-name';
-        nameSpan.title = 'View your kingdom';
+        nameSpan.title = 'View your repos';
         nameSpan.textContent = gkUser.login;
         authEl.appendChild(avatar);
         authEl.appendChild(document.createTextNode(' '));
         authEl.appendChild(nameSpan);
         authEl.style.cursor = 'pointer';
-        authEl.addEventListener('click', () => { window.location.href = `/${gkUser.login}`; });
-      }
-
-      // Wire up search input — search navigates within the world, no page reload
-      const searchInput = document.getElementById('hdr-search') as HTMLInputElement;
-      if (searchInput) {
-        searchInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            const query = searchInput.value.trim().toLowerCase();
-            if (!query) return;
-
-            const shared = (window as any).__gitworld;
-            if (!shared?.kingdoms) return;
-
-            // Find a language kingdom containing repos by this user
-            // Match by owner name OR repo name
-            const matchKingdom = (shared.kingdoms as any[]).find((lk: any) =>
-              lk.repos.some((r: any) => {
-                const fullName = r.repo.full_name.toLowerCase();
-                const repoName = r.repo.name.toLowerCase();
-                return fullName.startsWith(query + '/') || repoName === query || fullName === query;
-              })
-            );
-
-            if (matchKingdom) {
-              trackWorldSearch({ query, found: true });
-              // Go back to world map and the WorldScene search will handle the pan
-              window.history.pushState({}, '', `/${query}`);
-              this.scene.start('WorldScene', {
-                kingdoms: shared.kingdoms,
-                spritePacks: shared.spritePacks,
-                highlightUser: query,
-              });
-            } else {
-              trackWorldSearch({ query, found: false });
-              searchInput.style.borderColor = '#ff4444';
-              searchInput.placeholder = 'Not found in world';
-              setTimeout(() => {
-                searchInput.style.borderColor = '';
-                searchInput.placeholder = 'Search world...';
-              }, 1500);
-            }
-            searchInput.value = '';
-            searchInput.blur();
-          }
-          e.stopPropagation();
-        });
-        searchInput.addEventListener('focus', () => {
-          if (this.input?.keyboard) this.input.keyboard.enabled = false;
-        });
-        searchInput.addEventListener('blur', () => {
-          if (this.input?.keyboard) this.input.keyboard.enabled = true;
+        authEl.addEventListener('click', () => {
+          if ((window as any).__showProfilePanel) (window as any).__showProfilePanel();
         });
       }
 

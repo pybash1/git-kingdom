@@ -81,3 +81,27 @@ export async function joinWorld(): Promise<{ ok: boolean; addedRepos: number } |
     return null;
   }
 }
+
+export interface UserRepo {
+  id: number;
+  full_name: string;
+  name: string;
+  language: string | null;
+  stargazers: number;
+  description: string | null;
+  owner_login: string;
+}
+
+/**
+ * Fetch the signed-in user's claimed repos.
+ */
+export async function fetchMyRepos(): Promise<UserRepo[] | null> {
+  try {
+    const res = await fetch('/api/user/repos', { credentials: 'include' });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.repos || null;
+  } catch {
+    return null;
+  }
+}

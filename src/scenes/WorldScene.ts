@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { LanguageKingdom, TILES } from '../types';
 import { generateTileset, TILE_SIZE, TILESET_MARGIN, TILESET_SPACING, SpritePacks, GRASS_B_COLS, GRASS_B_FRAMES, GRASS_FLOWERS_COLS, GRASS_FLOWER_FRAMES, TREE_DEFS, GRASS_TREES_COLS, DESERT_B_COLS, DESERT_B_DECO, CAVE_B_COLS, CAVE_B_DECO, createBuildingTextures, getBuildingTextureKey } from '../generators/TilesetGenerator';
 import { generateWorld, WorldData, WorldKingdom, WorldSettlement } from '../generators/WorldGenerator';
-import { trackCityEntered, trackWorldSearch, trackPageView } from '../analytics';
+import { trackCityEntered, trackPageView } from '../analytics';
 
 // Stepped zoom levels for crisp pixel-art rendering (retro style)
 const WORLD_ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
@@ -882,8 +882,7 @@ export class WorldScene extends Phaser.Scene {
     const rightEl = header.querySelector('.header-right') as HTMLElement;
     if (rightEl) {
       rightEl.innerHTML =
-        `<input type="text" id="hdr-search" placeholder="Search world..." />` +
-        `<span id="hdr-auth"><a href="/api/auth/login" class="hdr-auth-link" id="hdr-signin">Sign in</a></span>`;
+        `<span id="hdr-auth"><a href="/api/auth/login" class="hdr-auth-link" id="hdr-signin"><span class="auth-long">Claim your repos</span><span class="auth-short">Claim</span></a></span>`;
 
       // Restore auth state if user is already signed in
       const gkUser = (window as any).__gkUser;
@@ -897,88 +896,21 @@ export class WorldScene extends Phaser.Scene {
         avatar.title = gkUser.login;
         const nameSpan = document.createElement('span');
         nameSpan.className = 'hdr-auth-name';
-        nameSpan.title = 'View your kingdom';
+        nameSpan.title = 'View your repos';
         nameSpan.textContent = gkUser.login;
         authEl.appendChild(avatar);
         authEl.appendChild(document.createTextNode(' '));
         authEl.appendChild(nameSpan);
         authEl.style.cursor = 'pointer';
-        authEl.addEventListener('click', () => { window.location.href = `/${gkUser.login}`; });
+        authEl.addEventListener('click', () => {
+          if ((window as any).__showProfilePanel) (window as any).__showProfilePanel();
+        });
       }
 
     }
 
-    // Wire up the search input
-    this.setupHeaderSearch();
-
     // Show the header
     header.style.display = 'flex';
-  }
-
-  private setupHeaderSearch() {
-    const searchInput = document.getElementById('hdr-search') as HTMLInputElement;
-    if (!searchInput) return;
-
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const query = searchInput.value.trim().toLowerCase();
-        if (!query) return;
-
-        // Search within the loaded universal world for this user's repos
-        const shared = (window as any).__gitworld;
-        if (!shared?.kingdoms) return;
-
-        // Find language kingdoms matching by owner name OR repo name
-        const matchKingdom = (shared.kingdoms as any[]).find((lk: any) =>
-          lk.repos.some((r: any) => {
-            const fullName = r.repo.full_name.toLowerCase();
-            const repoName = r.repo.name.toLowerCase();
-            return fullName.startsWith(query + '/') || repoName === query || fullName === query;
-          })
-        );
-
-        if (matchKingdom) {
-          trackWorldSearch({ query, found: true });
-          // Find the world kingdom for this language and pan to it
-          const wk = this.allKingdoms.find(k => k.language === matchKingdom.language);
-          if (wk) {
-            const px = wk.centroidX * 16; // TILE_SIZE
-            const py = wk.centroidY * 16;
-            this.cameras.main.pan(px, py, 600, 'Sine.easeInOut');
-            // Show the kingdom info panel after pan
-            setTimeout(() => this.showKingdomInfo(wk), 650);
-            // Update URL without reload
-            window.history.pushState({}, '', `/${query}`);
-          }
-        } else {
-          trackWorldSearch({ query, found: false });
-          // User not found in world — show a brief flash on the search input
-          searchInput.style.borderColor = '#ff4444';
-          searchInput.placeholder = 'Not found in world';
-          setTimeout(() => {
-            searchInput.style.borderColor = '';
-            searchInput.placeholder = 'Search world...';
-          }, 1500);
-        }
-
-        searchInput.value = '';
-        searchInput.blur();
-      }
-      // Prevent game from receiving WASD/arrow keys while typing
-      e.stopPropagation();
-    });
-
-    // Prevent Phaser from receiving keyboard events while search is focused
-    searchInput.addEventListener('focus', () => {
-      if (this.input?.keyboard) {
-        this.input.keyboard.enabled = false;
-      }
-    });
-    searchInput.addEventListener('blur', () => {
-      if (this.input?.keyboard) {
-        this.input.keyboard.enabled = true;
-      }
-    });
   }
 
   private buildLegend(kingdoms: WorldKingdom[], _settlements: WorldSettlement[]) {

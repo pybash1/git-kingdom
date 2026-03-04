@@ -477,27 +477,6 @@
     }
     #game-header .header-back p { font-size: 9px !important; margin: 0; line-height: 1 !important; }
 
-    /* ─── Header Search Input ─── */
-    #hdr-search {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 8px;
-      background: rgba(0, 0, 0, 0.4);
-      border: 2px solid #5a4a2a;
-      color: #e0d0a0;
-      padding: 4px 8px;
-      width: 160px;
-      outline: none;
-      transition: border-color 0.2s, width 0.2s;
-    }
-    #hdr-search:focus {
-      border-color: #ffd700;
-      width: 200px;
-    }
-    #hdr-search::placeholder {
-      color: #6a5a3a;
-      font-size: 7px;
-    }
-
     /* ─── Header Auth (sign-in link or avatar) ─── */
     .hdr-auth-link {
       font-family: 'Press Start 2P', monospace;
@@ -510,6 +489,12 @@
     }
     .hdr-auth-link:hover {
       color: #ffd700;
+    }
+    .hdr-auth-link .auth-long { display: inline; }
+    .hdr-auth-link .auth-short { display: none; }
+    @media (max-width: 600px) {
+      .hdr-auth-link .auth-long { display: none; }
+      .hdr-auth-link .auth-short { display: inline; }
     }
     .hdr-auth-avatar {
       width: 22px;
@@ -564,6 +549,102 @@
       font-size: 10px;
       min-width: 50px;
       text-align: right;
+    }
+
+    /* ─── Profile Panel (user's claimed repos) ─── */
+    #profile-panel {
+      position: fixed !important;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      top: auto !important;
+      padding: 10px 16px 14px !important;
+      min-width: 320px;
+      max-width: 420px;
+      max-height: 70vh;
+      overflow-y: auto;
+      display: none;
+      z-index: 100;
+    }
+    #profile-close {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      z-index: 10;
+      min-width: 30px !important;
+      width: 30px !important;
+      height: 30px !important;
+      padding: 0 !important;
+    }
+    #profile-close p { font-size: 10px !important; margin: 0; line-height: 1; }
+    .profile-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .profile-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 4px;
+      border: 2px solid #ffd700;
+      flex-shrink: 0;
+      image-rendering: auto;
+      object-fit: cover;
+    }
+    .profile-header-text {
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+    }
+    .profile-header-text h2 {
+      font-size: 11px;
+      margin-bottom: 4px;
+      border-bottom: none;
+      padding-bottom: 0;
+      color: #ffd700;
+    }
+    #profile-subtitle {
+      font-size: 8px;
+      opacity: 0.7;
+    }
+    .profile-repo-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px;
+      cursor: pointer;
+      font-size: 9px;
+      transition: background 0.15s;
+    }
+    .profile-repo-item:hover {
+      background: rgba(255,255,255,0.08);
+    }
+    .profile-repo-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 220px;
+      color: #e0d0a0;
+    }
+    .profile-repo-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      font-size: 8px;
+      opacity: 0.7;
+    }
+    .profile-repo-stars {
+      color: #c8a853;
+    }
+    .profile-section-header {
+      font-size: 8px;
+      color: #c8a853;
+      margin-top: 6px;
+      border-top: 1px solid #5a3a1a;
+      padding-top: 4px;
+      margin-bottom: 4px;
     }
 
     /* ─── Info panel with avatar layout ─── */
@@ -631,9 +712,8 @@
         </div>
       </div>
       <div class="header-right">
-        <input type="text" id="hdr-search" placeholder="GitHub user..." />
         <span id="hdr-auth">
-          <a href="/api/auth/login" class="hdr-auth-link" id="hdr-signin">Sign in</a>
+          <a href="/api/auth/login" class="hdr-auth-link" id="hdr-signin"><span class="auth-long">Claim your repos</span><span class="auth-short">Claim</span></a>
         </span>
       </div>
     </div>
@@ -661,6 +741,19 @@
       </div>
       <div id="info-stats"></div>
       <div id="info-king" class="king"></div>
+    </div>
+
+    <!-- Profile panel — user's claimed repos -->
+    <div id="profile-panel" class="rpgui-container framed-golden">
+      <button id="profile-close" class="rpgui-button" title="Close"><p>✕</p></button>
+      <div class="profile-header">
+        <img id="profile-avatar" class="profile-avatar" src="" alt="" />
+        <div class="profile-header-text">
+          <h2 id="profile-name"></h2>
+          <div id="profile-subtitle"></div>
+        </div>
+      </div>
+      <div id="profile-repos"></div>
     </div>
 
   </div><!-- end rpgui-overlay -->
@@ -716,6 +809,12 @@
       document.getElementById('legend').style.display = 'none';
     });
 
+    // Profile panel close button
+    document.getElementById('profile-close').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('profile-panel').style.display = 'none';
+    });
+
     // ─── GitHub OAuth: check auth on load → update header ───
     (function checkAuth() {
       fetch('/api/auth/me', { credentials: 'include' })
@@ -739,9 +838,9 @@
             authEl.appendChild(avatar);
             authEl.appendChild(document.createTextNode(' '));
             authEl.appendChild(nameSpan);
-            // Click avatar/name → go to user's kingdom
+            // Click avatar/name → show profile panel
             authEl.addEventListener('click', function() {
-              window.location.href = '/' + user.login;
+              if (window.__showProfilePanel) window.__showProfilePanel();
             });
           }
           // Store user info globally for game scenes
@@ -749,6 +848,105 @@
         })
         .catch(function() { /* not signed in, that's fine */ });
     })();
+
+    // ─── Profile panel: fetch + show user's claimed repos ───
+    function escHtml(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    window.__showProfilePanel = function() {
+      var user = window.__gkUser;
+      if (!user) return;
+
+      var panel = document.getElementById('profile-panel');
+      var avatarEl = document.getElementById('profile-avatar');
+      var nameEl = document.getElementById('profile-name');
+      var subtitleEl = document.getElementById('profile-subtitle');
+      var reposEl = document.getElementById('profile-repos');
+
+      // Set user info immediately
+      avatarEl.src = user.avatar_url;
+      avatarEl.alt = user.login;
+      nameEl.textContent = user.login;
+      subtitleEl.textContent = 'Loading your repos...';
+      reposEl.innerHTML = '';
+
+      // Hide info panel (they share screen space)
+      document.getElementById('info-panel').style.display = 'none';
+
+      // Reset position and show
+      if (window.__resetPanelPos) window.__resetPanelPos(panel);
+      panel.style.display = 'block';
+
+      // Track analytics
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'profile_panel_opened');
+      }
+
+      // Fetch repos from API
+      fetch('/api/user/repos', { credentials: 'include' })
+        .then(function(res) { return res.ok ? res.json() : null; })
+        .then(function(data) {
+          if (!data || !data.repos || data.repos.length === 0) {
+            subtitleEl.textContent = 'No repos claimed yet';
+            reposEl.innerHTML = '<div style="font-size:9px;color:#8a8070;margin-top:8px">' +
+              'Your repos appear here after claiming. ' +
+              'Visit <a href="/' + escHtml(user.login) + '" class="gh-link">/' + escHtml(user.login) + '</a> to add your repos to the kingdom!</div>';
+            return;
+          }
+
+          var repos = data.repos;
+          subtitleEl.textContent = repos.length + ' repo' + (repos.length !== 1 ? 's' : '') + ' in the kingdom';
+
+          // Group repos by language
+          var byLang = {};
+          repos.forEach(function(r) {
+            var lang = r.language || 'Other';
+            if (!byLang[lang]) byLang[lang] = [];
+            byLang[lang].push(r);
+          });
+
+          var html = '';
+          var langs = Object.keys(byLang).sort(function(a, b) {
+            var starsA = byLang[a].reduce(function(s, r) { return s + r.stargazers; }, 0);
+            var starsB = byLang[b].reduce(function(s, r) { return s + r.stargazers; }, 0);
+            return starsB - starsA;
+          });
+
+          langs.forEach(function(lang) {
+            var langRepos = byLang[lang];
+            html += '<div class="profile-section-header">' +
+              escHtml(lang) + ' Kingdom (' + langRepos.length + ')</div>';
+
+            langRepos.forEach(function(r) {
+              var stars = r.stargazers >= 1000
+                ? Math.round(r.stargazers / 1000) + 'k'
+                : r.stargazers;
+              html += '<div class="profile-repo-item" data-repo="' + escHtml(r.full_name) + '">' +
+                '<span class="profile-repo-name">' + escHtml(r.name) + '</span>' +
+                '<span class="profile-repo-meta">' +
+                  '<span class="profile-repo-stars">' + stars + ' ★</span>' +
+                '</span>' +
+              '</div>';
+            });
+          });
+
+          reposEl.innerHTML = html;
+
+          // Wire up click handlers — navigate to repo in the kingdom
+          reposEl.querySelectorAll('.profile-repo-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+              var fullName = el.getAttribute('data-repo');
+              if (fullName) {
+                window.location.href = '/' + fullName;
+              }
+            });
+          });
+        })
+        .catch(function() {
+          subtitleEl.textContent = 'Failed to load repos';
+        });
+    };
 
     // ─── Panel position reset (called before showing a panel) ───
     window.__resetPanelPos = function(panel) {
@@ -809,6 +1007,7 @@
 
       makeDraggable(document.getElementById('info-panel'));
       makeDraggable(document.getElementById('legend'));
+      makeDraggable(document.getElementById('profile-panel'));
     })();
   </script>
 

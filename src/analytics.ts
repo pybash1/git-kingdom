@@ -92,3 +92,7 @@ export function trackSignInInitiated(): void {
 export function trackWorldJoined(params: { added_repos: number }): void {
   trackEvent('world_joined', params);
 }
+
+export function trackProfilePanelOpened(): void {
+  trackEvent('profile_panel_opened');
+}
