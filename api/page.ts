@@ -114,11 +114,11 @@ function injectMeta(html: string, meta: SeoMeta): string {
   // Replace OG image
   if (meta.ogImage) {
     result = result.replace(
-      `<meta property="og:image" content="https://gitkingdom.com/assets/og-image.png" />`,
+      `<meta property="og:image" content="https://gitkingdom.com/assets/og-image.jpg" />`,
       `<meta property="og:image" content="${esc(meta.ogImage)}" />`,
     );
     result = result.replace(
-      `<meta name="twitter:image" content="https://gitkingdom.com/assets/og-image.png" />`,
+      `<meta name="twitter:image" content="https://gitkingdom.com/assets/og-image.jpg" />`,
       `<meta name="twitter:image" content="${esc(meta.ogImage)}" />`,
     );
   }

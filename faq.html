@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ | Git Kingdom</title>
+  <meta name="description" content="Frequently asked questions about Git Kingdom — how to claim repos, why buildings require stars, how kingdoms work, and more." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://gitkingdom.com/faq" />
+  <meta property="og:title" content="FAQ — Git Kingdom" />
+  <meta property="og:description" content="Frequently asked questions about Git Kingdom — how to claim repos, why buildings require stars, how kingdoms work, and more." />
+  <meta property="og:image" content="https://gitkingdom.com/assets/og-image.jpg" />
+  <meta property="og:url" content="https://gitkingdom.com/faq" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #d4c8a0;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    .page-header {
+      background: linear-gradient(180deg, #16213e 0%, #1a1a2e 100%);
+      border-bottom: 3px solid #8b6914;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .page-header a { text-decoration: none; }
+    .logo {
+      font-family: 'Silkscreen', monospace;
+      color: #ffd700;
+      font-size: 20px;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px rgba(255,215,0,0.3);
+    }
+    .logo span { background: #ffd700; color: #1a1a2e; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 8px; letter-spacing: 1px; }
+    nav { display: flex; gap: 20px; }
+    nav a {
+      font-family: 'Silkscreen', monospace;
+      color: #a89060;
+      text-decoration: none;
+      font-size: 11px;
+      letter-spacing: 1px;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: #ffd700; }
+    .content {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    h1 {
+      font-family: 'Silkscreen', monospace;
+      color: #ffd700;
+      font-size: 28px;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+    h2 {
+      font-family: 'Silkscreen', monospace;
+      color: #e8c840;
+      font-size: 16px;
+      margin-top: 36px;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    p { margin-bottom: 16px; font-size: 15px; color: #c0b088; }
+    .subtitle { font-size: 14px; color: #8a7a58; margin-bottom: 32px; }
+    .faq-item {
+      margin: 24px 0;
+      padding: 20px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid #3a3020;
+      border-radius: 8px;
+    }
+    .faq-q {
+      font-family: 'Silkscreen', monospace;
+      color: #e0c870;
+      font-size: 13px;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+    .faq-a { font-size: 14px; color: #c0b088; margin: 0; }
+    .faq-a a { color: #e8a020; text-decoration: none; }
+    .faq-a a:hover { text-decoration: underline; }
+    .cta {
+      display: inline-block;
+      font-family: 'Silkscreen', monospace;
+      background: linear-gradient(180deg, #e8a020, #c07818);
+      color: #1a1a2e;
+      padding: 12px 28px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: 1px;
+      margin-top: 24px;
+      transition: transform 0.15s;
+    }
+    .cta:hover { transform: scale(1.03); }
+    .page-footer {
+      border-top: 2px solid #2a2418;
+      padding: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #5a4a30;
+    }
+    .page-footer a { color: #8a7a58; text-decoration: none; margin: 0 10px; }
+    .page-footer a:hover { color: #ffd700; }
+    @media (max-width: 600px) {
+      nav { gap: 12px; }
+      nav a { font-size: 9px; }
+      h1 { font-size: 22px; }
+      .content { padding: 32px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <a href="/"><span class="logo">GIT KINGDOM <span>ALPHA</span></span></a>
+    <nav>
+      <a href="/about">About</a>
+      <a href="/how-it-works">How It Works</a>
+      <a href="/faq">FAQ</a>
+      <a href="/changelog">Changelog</a>
+    </nav>
+  </header>
+
+  <main class="content">
+    <h1>FAQ</h1>
+    <p class="subtitle">Frequently Asked Questions</p>
+
+    <div class="faq-item">
+      <div class="faq-q">How do I add my repos to the map?</div>
+      <p class="faq-a">
+        Click the avatar icon in the top-right corner and sign in with GitHub. Your public
+        repositories with at least 1 star are automatically claimed and added as buildings
+        in their language's kingdom. No manual setup needed.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Why don't all my repos appear?</div>
+      <p class="faq-a">
+        Only public repositories with at least 1 GitHub star become buildings. This keeps the
+        map focused on projects that have community engagement. Private repos and forks without
+        stars are not included.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">How is building size determined?</div>
+      <p class="faq-a">
+        The number of GitHub stars determines the building rank and footprint size. A repo with
+        1–20 stars is a small hovel (2×2), while a repo with 100,000+ stars becomes a massive
+        citadel (20×20). See the full ranking on the
+        <a href="/how-it-works">How It Works</a> page.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">What is a "kingdom"?</div>
+      <p class="faq-a">
+        Each programming language on GitHub is represented as its own kingdom (city) in the
+        world. TypeScript repos live in the TypeScript kingdom, Python repos in the Python
+        kingdom, and so on. Navigate the world map to explore each kingdom.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Who is the "king" of a building?</div>
+      <p class="faq-a">
+        The contributor with the most commits to a repository is crowned the king of that
+        building. Their avatar appears on the building's banner. If you contribute more than
+        anyone else, you become the king!
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">What are citizens?</div>
+      <p class="faq-a">
+        Citizens are the top contributors to repositories. They appear as pixel-art characters
+        walking the streets of their kingdom. The more you contribute across repos in a language,
+        the more you'll appear in that kingdom.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Does everyone see the same world?</div>
+      <p class="faq-a">
+        Yes! The world is the same for everyone. All users see the same buildings in the same
+        positions. When you sign in and claim your repos, those buildings are added to the
+        shared world for everyone to see.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Is Git Kingdom free?</div>
+      <p class="faq-a">
+        Yes, Git Kingdom is completely free and
+        <a href="https://github.com/rgourley/git-kingdom">open source</a>.
+        There are no premium features, ads, or paid tiers.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">What data do you collect?</div>
+      <p class="faq-a">
+        Only your public GitHub profile (username, avatar) and public repo metadata (names,
+        stars, language). We never access private repos or store your email. See our
+        <a href="/privacy">Privacy Policy</a> for full details.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Can I remove my repos from the map?</div>
+      <p class="faq-a">
+        Sign out to disassociate your account. For complete data removal, open an issue
+        on our <a href="https://github.com/rgourley/git-kingdom">GitHub repo</a> and
+        we'll remove your data within 30 days.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">How often is the map updated?</div>
+      <p class="faq-a">
+        The world data refreshes periodically. Newly claimed repos appear immediately.
+        Star counts and contributor data sync from GitHub within a few hours.
+      </p>
+    </div>
+
+    <h2>Still have questions?</h2>
+    <p>
+      Open an issue on <a href="https://github.com/rgourley/git-kingdom" style="color:#e8a020">GitHub</a>
+      and we'll get back to you.
+    </p>
+
+    <a href="/" class="cta">Enter the Kingdom</a>
+  </main>
+
+  <footer class="page-footer">
+    <p>
+      <a href="/about">About</a>
+      <a href="/how-it-works">How It Works</a>
+      <a href="/faq">FAQ</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/changelog">Changelog</a>
+    </p>
+    <p style="margin-top:8px">Created by <a href="https://github.com/rgourley" style="color:#a89060">Rob Gourley</a></p>
+  </footer>
+</body>
+</html>

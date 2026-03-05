@@ -13,6 +13,11 @@ const RESERVED_PATHS = new Set([
   'assets',
   'data',
   'api',
+  'about',
+  'privacy',
+  'changelog',
+  'how-it-works',
+  'faq',
 ]);
 
 export interface Route {

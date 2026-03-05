@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy | Git Kingdom</title>
+  <meta name="description" content="Git Kingdom privacy policy. Learn what data we collect, how we use GitHub OAuth, and how your information is stored." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://gitkingdom.com/privacy" />
+  <meta property="og:title" content="Privacy Policy — Git Kingdom" />
+  <meta property="og:description" content="Git Kingdom privacy policy. Learn what data we collect, how we use GitHub OAuth, and how your information is stored." />
+  <meta property="og:image" content="https://gitkingdom.com/assets/og-image.jpg" />
+  <meta property="og:url" content="https://gitkingdom.com/privacy" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #d4c8a0;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    .page-header {
+      background: linear-gradient(180deg, #16213e 0%, #1a1a2e 100%);
+      border-bottom: 3px solid #8b6914;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .page-header a { text-decoration: none; }
+    .logo {
+      font-family: 'Silkscreen', monospace;
+      color: #ffd700;
+      font-size: 20px;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px rgba(255,215,0,0.3);
+    }
+    .logo span { background: #ffd700; color: #1a1a2e; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 8px; letter-spacing: 1px; }
+    nav { display: flex; gap: 20px; }
+    nav a {
+      font-family: 'Silkscreen', monospace;
+      color: #a89060;
+      text-decoration: none;
+      font-size: 11px;
+      letter-spacing: 1px;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: #ffd700; }
+    .content {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    h1 {
+      font-family: 'Silkscreen', monospace;
+      color: #ffd700;
+      font-size: 28px;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+    h2 {
+      font-family: 'Silkscreen', monospace;
+      color: #e8c840;
+      font-size: 16px;
+      margin-top: 36px;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    p { margin-bottom: 16px; font-size: 15px; color: #c0b088; }
+    .subtitle { font-size: 14px; color: #8a7a58; margin-bottom: 32px; }
+    ul { margin: 0 0 16px 24px; }
+    li { font-size: 15px; color: #c0b088; margin-bottom: 8px; }
+    a.inline { color: #e8a020; text-decoration: none; }
+    a.inline:hover { text-decoration: underline; }
+    .cta {
+      display: inline-block;
+      font-family: 'Silkscreen', monospace;
+      background: linear-gradient(180deg, #e8a020, #c07818);
+      color: #1a1a2e;
+      padding: 12px 28px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: 1px;
+      margin-top: 24px;
+      transition: transform 0.15s;
+    }
+    .cta:hover { transform: scale(1.03); }
+    .page-footer {
+      border-top: 2px solid #2a2418;
+      padding: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #5a4a30;
+    }
+    .page-footer a { color: #8a7a58; text-decoration: none; margin: 0 10px; }
+    .page-footer a:hover { color: #ffd700; }
+    @media (max-width: 600px) {
+      nav { gap: 12px; }
+      nav a { font-size: 9px; }
+      h1 { font-size: 22px; }
+      .content { padding: 32px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <a href="/"><span class="logo">GIT KINGDOM <span>ALPHA</span></span></a>
+    <nav>
+      <a href="/about">About</a>
+      <a href="/how-it-works">How It Works</a>
+      <a href="/faq">FAQ</a>
+      <a href="/changelog">Changelog</a>
+    </nav>
+  </header>
+
+  <main class="content">
+    <h1>Privacy Policy</h1>
+    <p class="subtitle">Last updated: March 2026</p>
+
+    <p>
+      Git Kingdom is a free, open-source project. We take your privacy seriously and collect
+      the minimum data needed to make the game work.
+    </p>
+
+    <h2>GitHub OAuth</h2>
+    <p>
+      When you sign in, we use GitHub OAuth to authenticate your identity. We request
+      <strong>read-only access to your public profile</strong> — specifically your username,
+      avatar URL, and list of public repositories.
+    </p>
+    <p>
+      We never request access to private repositories, and we never write anything
+      to your GitHub account.
+    </p>
+
+    <h2>What We Store</h2>
+    <p>When you sign in and claim your repos, we store the following in our database:</p>
+    <ul>
+      <li>Your GitHub username and avatar URL</li>
+      <li>A list of your public repositories with 1+ stars (name, language, star count)</li>
+      <li>A Supabase authentication token (for session management)</li>
+    </ul>
+    <p>
+      We do <strong>not</strong> store your email address, GitHub access token,
+      or any private repository information.
+    </p>
+
+    <h2>Cookies</h2>
+    <p>
+      Git Kingdom uses a session cookie set by Supabase Auth to keep you signed in.
+      This cookie is strictly functional — we do not use advertising cookies, tracking
+      pixels, or cross-site tracking of any kind.
+    </p>
+
+    <h2>Analytics</h2>
+    <p>
+      We may use basic analytics (such as Vercel Web Analytics) to understand page views
+      and performance. These are anonymized and do not track individual users across sites.
+    </p>
+
+    <h2>Third-Party Services</h2>
+    <ul>
+      <li><strong>GitHub API</strong> — to fetch public repository and contributor data</li>
+      <li><strong>Supabase</strong> — database and authentication</li>
+      <li><strong>Vercel</strong> — hosting and serverless functions</li>
+      <li><strong>Google Fonts</strong> — for the Silkscreen pixel font</li>
+    </ul>
+
+    <h2>Data Deletion</h2>
+    <p>
+      If you want your data removed from Git Kingdom, you can sign out at any time.
+      To request complete deletion of your stored data, open an issue on our
+      <a href="https://github.com/rgourley/git-kingdom" class="inline">GitHub repository</a>
+      or email us. We'll remove your record within 30 days.
+    </p>
+
+    <h2>Open Source</h2>
+    <p>
+      Git Kingdom is fully open source. You can inspect exactly what data we collect and how
+      we handle it by reviewing the code on
+      <a href="https://github.com/rgourley/git-kingdom" class="inline">GitHub</a>.
+    </p>
+
+    <a href="/" class="cta">Enter the Kingdom</a>
+  </main>
+
+  <footer class="page-footer">
+    <p>
+      <a href="/about">About</a>
+      <a href="/how-it-works">How It Works</a>
+      <a href="/faq">FAQ</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/changelog">Changelog</a>
+    </p>
+    <p style="margin-top:8px">Created by <a href="https://github.com/rgourley" style="color:#a89060">Rob Gourley</a></p>
+  </footer>
+</body>
+</html>

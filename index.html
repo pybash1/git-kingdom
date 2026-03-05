@@ -27,14 +27,14 @@
   <meta property="og:site_name" content="Git Kingdom" />
   <meta property="og:title" content="Git Kingdom | Explore GitHub as a Fantasy RPG World" />
   <meta property="og:description" content="Visualize any GitHub profile as a pixel-art fantasy kingdom. Repos become buildings, contributors become walking citizens, and programming languages become kingdoms." />
-  <meta property="og:image" content="https://gitkingdom.com/assets/og-image.png" />
+  <meta property="og:image" content="https://gitkingdom.com/assets/og-image.jpg" />
   <meta property="og:url" content="https://gitkingdom.com/" />
   <meta property="og:locale" content="en_US" />
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Git Kingdom | Explore GitHub as a Fantasy RPG World" />
   <meta name="twitter:description" content="Visualize any GitHub profile as a pixel-art fantasy kingdom. Repos become buildings, contributors become walking citizens, and programming languages become kingdoms." />
-  <meta name="twitter:image" content="https://gitkingdom.com/assets/og-image.png" />
+  <meta name="twitter:image" content="https://gitkingdom.com/assets/og-image.jpg" />
   <!-- Structured Data -->
   <script type="application/ld+json">
   {
@@ -777,15 +777,50 @@
 
   </div><!-- end rpgui-overlay -->
 
-  <!-- Background music -->
-  <audio id="bgm" loop preload="auto" src="/assets/audio/bgm.mp3"></audio>
+  <!-- Background music (playlist) -->
+  <audio id="bgm" preload="auto"></audio>
 
   <script>
-    // Music player — needs user interaction to start (browser autoplay policy)
+    // Music playlist — shuffles through tracks, auto-starts after first interaction
     (function() {
       var audio = document.getElementById('bgm');
       var btn = document.getElementById('music-btn');
       var playing = false;
+
+      var tracks = [
+        '/assets/audio/bgm.mp3',
+        '/assets/audio/bgm2.mp3',
+        '/assets/audio/bgm3.mp3'
+      ];
+
+      // Shuffle playlist on load
+      function shuffle(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
+      }
+      shuffle(tracks);
+      var currentTrack = 0;
+
+      function loadTrack(index) {
+        audio.src = tracks[index % tracks.length];
+        audio.load();
+      }
+
+      // When a track ends, play the next one
+      audio.addEventListener('ended', function() {
+        currentTrack++;
+        if (currentTrack >= tracks.length) {
+          currentTrack = 0;
+          shuffle(tracks); // reshuffle for next cycle
+        }
+        loadTrack(currentTrack);
+        audio.play().catch(function() {});
+      });
+
+      loadTrack(0);
 
       function tryPlay() {
         audio.volume = 0.35;
@@ -805,7 +840,14 @@
         }
       });
 
-      // Music is opt-in only — click the 🔇 button to start
+      // Auto-play after the first user click anywhere (satisfies browser autoplay policy)
+      function autoStart() {
+        tryPlay();
+        document.removeEventListener('click', autoStart);
+        document.removeEventListener('keydown', autoStart);
+      }
+      document.addEventListener('click', autoStart);
+      document.addEventListener('keydown', autoStart);
     })();
 
     // Info panel close button

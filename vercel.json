@@ -6,6 +6,11 @@
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/index.html", "destination": "/index.html" },
     { "source": "/editor.html", "destination": "/editor.html" },
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/privacy", "destination": "/privacy.html" },
+    { "source": "/changelog", "destination": "/changelog.html" },
+    { "source": "/how-it-works", "destination": "/how-it-works.html" },
+    { "source": "/faq", "destination": "/faq.html" },
     { "source": "/:path*", "destination": "/api/page" }
   ]
 }

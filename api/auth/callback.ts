@@ -38,5 +38,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Non-fatal — user can still use the app
   }
 
-  res.redirect(302, `/${login}`);
+  res.redirect(302, '/');
 }

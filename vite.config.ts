@@ -52,10 +52,32 @@ function templateSavePlugin(): Plugin {
 
 export default defineConfig({
   base: '/',
-  plugins: [templateSavePlugin()],
+  plugins: [
+    templateSavePlugin(),
+    // Intercept /api/* requests in dev so Vite doesn't try to transform serverless .ts files
+    {
+      name: 'mock-api',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          // If it's an /api/ request (not /api/save-templates which is handled above),
+          // return a 404 JSON instead of letting Vite try to serve api/*.ts as modules
+          if (req.url?.startsWith('/api/') && !req.url.startsWith('/api/save-templates')) {
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'API not available in dev mode' }));
+            return;
+          }
+          next();
+        });
+      },
+    },
+  ],
   server: {
+    hmr: {
+      overlay: false,
+    },
     watch: {
-      ignored: ['**/api/**'],
+      ignored: [resolve(__dirname, 'api') + '/**'],
     },
   },
   build: {
@@ -64,6 +86,11 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         editor: resolve(__dirname, 'editor.html'),
+        about: resolve(__dirname, 'about.html'),
+        privacy: resolve(__dirname, 'privacy.html'),
+        changelog: resolve(__dirname, 'changelog.html'),
+        'how-it-works': resolve(__dirname, 'how-it-works.html'),
+        faq: resolve(__dirname, 'faq.html'),
       },
     },
   },
