@@ -40,6 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log(`[join] ${login}: found ${metrics.length} repos`);
 
     let addedRepos = 0;
+    const addedRepoNames: string[] = [];
 
     for (const m of metrics) {
       // Upsert each repo
@@ -96,7 +97,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } catch { /* ignore duplicate */ }
 
       addedRepos++;
+      addedRepoNames.push(m.repo.full_name);
     }
+
+    // Log activity for admin visibility
+    console.log(`[join] ${login}: added ${addedRepos} repos: ${addedRepoNames.join(', ')}`);
 
     // Count totals for response
     const { count: totalRepos } = await service.from('repos').select('*', { count: 'exact', head: true });
@@ -104,7 +109,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     res.json({
       ok: true,
+      login,
       addedRepos,
+      addedRepoNames,
       totalWorldRepos: totalRepos || 0,
       totalWorldUsers: totalUsers || 0,
     });

@@ -1492,7 +1492,7 @@ export class CityScene extends Phaser.Scene {
 
     // Wire up citizen links — clicking a user opens their citizen card
     kingEl.querySelectorAll('.citizen-link').forEach((link) => {
-      link.addEventListener('click', (e) => {
+      this.trackListener(link as HTMLElement, 'click', (e) => {
         e.preventDefault();
         const login = (link as HTMLElement).dataset.login;
         if (login) this.openCitizenByLogin(login);
@@ -1648,7 +1648,7 @@ export class CityScene extends Phaser.Scene {
         authEl.appendChild(document.createTextNode(' '));
         authEl.appendChild(nameSpan);
         authEl.style.cursor = 'pointer';
-        authEl.addEventListener('click', () => {
+        this.trackListener(authEl, 'click', () => {
           if ((window as any).__showProfilePanel) (window as any).__showProfilePanel();
         });
       }
@@ -1762,7 +1762,7 @@ export class CityScene extends Phaser.Scene {
 
     // Wire up citizen legend clicks → open citizen info card
     legend.querySelectorAll('.legend-citizen').forEach((el) => {
-      el.addEventListener('click', (e) => {
+      this.trackListener(el as HTMLElement, 'click', (e) => {
         e.stopPropagation();
         const login = (el as HTMLElement).dataset.login;
         if (login) this.openCitizenByLogin(login);
@@ -1776,7 +1776,7 @@ export class CityScene extends Phaser.Scene {
     // Re-wire close button (legend innerHTML was replaced)
     const closeBtn = legend.querySelector('#legend-close');
     if (closeBtn) {
-      closeBtn.addEventListener('click', (e) => {
+      this.trackListener(closeBtn as HTMLElement, 'click', (e) => {
         e.stopPropagation();
         legend.style.display = 'none';
       });
@@ -1785,7 +1785,7 @@ export class CityScene extends Phaser.Scene {
     // Search
     const searchInput = document.getElementById('legend-search') as HTMLInputElement;
     if (searchInput) {
-      searchInput.addEventListener('input', () => {
+      this.trackListener(searchInput, 'input', () => {
         const query = searchInput.value.toLowerCase().trim();
         // Filter buildings
         const bItems = legend.querySelectorAll('.legend-settlement') as NodeListOf<HTMLElement>;
@@ -1803,8 +1803,9 @@ export class CityScene extends Phaser.Scene {
         });
       });
 
-      searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
+      this.trackListener(searchInput, 'keydown', ((e: Event) => {
+        const ke = e as KeyboardEvent;
+        if (ke.key === 'Enter') {
           const query = searchInput.value.toLowerCase().trim();
           if (!query) return;
 
@@ -1833,11 +1834,11 @@ export class CityScene extends Phaser.Scene {
             this.openCitizenByLogin(citizenMatch.login);
           }
         }
-      });
+      }));
     }
 
     // Click handler
-    legend.addEventListener('click', (e) => {
+    this.trackListener(legend, 'click', (e) => {
       const item = (e.target as HTMLElement).closest('.legend-settlement') as HTMLElement;
       if (!item) return;
       const bx = parseInt(item.dataset.bx!, 10);

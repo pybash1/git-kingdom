@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin | Git Kingdom</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #d4c8a0;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .page-header {
+      background: linear-gradient(180deg, #16213e 0%, #1a1a2e 100%);
+      border-bottom: 3px solid #8b6914;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .page-header a { text-decoration: none; }
+    .logo {
+      font-family: 'Silkscreen', monospace;
+      color: #ffd700;
+      font-size: 20px;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px rgba(255,215,0,0.3);
+    }
+    .logo span {
+      background: #c04040;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      margin-left: 8px;
+      letter-spacing: 1px;
+    }
+    .content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+    h1 {
+      font-family: 'Silkscreen', monospace;
+      color: #ffd700;
+      font-size: 24px;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+    h2 {
+      font-family: 'Silkscreen', monospace;
+      color: #e8c840;
+      font-size: 14px;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    .subtitle { font-size: 13px; color: #8a7a58; margin-bottom: 24px; }
+
+    /* Stats cards */
+    .stats {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid #3a3020;
+      border-radius: 8px;
+      padding: 16px 24px;
+      flex: 1;
+      text-align: center;
+    }
+    .stat-number {
+      font-family: 'Silkscreen', monospace;
+      font-size: 28px;
+      color: #ffd700;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: #8a7a58;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Users list */
+    .users-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid #3a3020;
+      border-radius: 20px;
+      padding: 4px 12px 4px 4px;
+      font-size: 12px;
+      color: #c0b088;
+    }
+    .user-chip img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+    }
+
+    /* Activity feed */
+    .activity-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #2a2418;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .activity-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .activity-header img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+    }
+    .activity-owner {
+      font-family: 'Silkscreen', monospace;
+      color: #e0c870;
+      font-size: 12px;
+    }
+    .activity-date {
+      font-size: 11px;
+      color: #6a5a40;
+      margin-left: auto;
+    }
+    .activity-repos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .repo-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(139,105,20,0.15);
+      border: 1px solid #3a3020;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: #c0b088;
+    }
+    .repo-tag .lang {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .repo-tag .stars {
+      color: #ffd700;
+      font-size: 10px;
+    }
+
+    /* Loading / error */
+    .loading {
+      text-align: center;
+      padding: 48px;
+      color: #8a7a58;
+      font-size: 14px;
+    }
+    .error {
+      text-align: center;
+      padding: 48px;
+      color: #c04040;
+      font-size: 14px;
+    }
+    .error a {
+      color: #ffd700;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <a href="/"><div class="logo">GIT KINGDOM <span>ADMIN</span></div></a>
+  </header>
+
+  <main class="content">
+    <h1>Admin Dashboard</h1>
+    <p class="subtitle">Recent activity and world stats</p>
+
+    <div id="dashboard">
+      <div class="loading">Loading dashboard...</div>
+    </div>
+  </main>
+
+  <script>
+    (function() {
+      var el = document.getElementById('dashboard');
+
+      // Language colors
+      var langColors = {
+        JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572a5',
+        Java: '#b07219', Go: '#00add8', Rust: '#dea584', Ruby: '#701516',
+        'C++': '#f34b7d', C: '#555555', 'C#': '#178600', Swift: '#f05138',
+        Kotlin: '#a97bff', PHP: '#4f5d95', Shell: '#89e051', Lua: '#000080',
+        Dart: '#00b4ab', Scala: '#c22d40', Zig: '#ec915c', Elixir: '#6e4a7e',
+      };
+
+      // Escape user-controlled strings to prevent XSS
+      function esc(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      fetch('/api/admin/activity', { credentials: 'include' })
+        .then(function(res) {
+          if (res.status === 401) throw new Error('auth');
+          if (res.status === 403) throw new Error('forbidden');
+          if (!res.ok) throw new Error('fail');
+          return res.json();
+        })
+        .then(function(data) {
+          var html = '';
+
+          // Stats
+          html += '<div class="stats">';
+          html += '<div class="stat-card"><div class="stat-number">' + data.stats.totalRepos + '</div><div class="stat-label">Total Repos</div></div>';
+          html += '<div class="stat-card"><div class="stat-number">' + data.stats.totalUsers + '</div><div class="stat-label">Registered Users</div></div>';
+          html += '<div class="stat-card"><div class="stat-number">' + data.activity.length + '</div><div class="stat-label">Join Events</div></div>';
+          html += '</div>';
+
+          // Users
+          html += '<h2>Registered Users</h2>';
+          html += '<div class="users-grid">';
+          for (var i = 0; i < data.users.length; i++) {
+            var u = data.users[i];
+            html += '<div class="user-chip">';
+            if (u.avatar_url) html += '<img src="' + esc(u.avatar_url) + '" alt="" />';
+            html += esc(u.login) + '</div>';
+          }
+          html += '</div>';
+
+          // Activity
+          html += '<h2>Recent Activity</h2>';
+          if (data.activity.length === 0) {
+            html += '<p style="color:#6a5a40;font-size:13px">No activity yet.</p>';
+          }
+          for (var j = 0; j < data.activity.length; j++) {
+            var a = data.activity[j];
+            html += '<div class="activity-item">';
+            html += '<div class="activity-header">';
+            if (a.avatar) html += '<img src="' + esc(a.avatar) + '" alt="" />';
+            html += '<span class="activity-owner">' + esc(a.owner) + '</span>';
+            html += '<span class="activity-date">' + esc(formatDate(a.date)) + '</span>';
+            html += '</div>';
+            html += '<div class="activity-repos">';
+            for (var k = 0; k < a.repos.length; k++) {
+              var r = a.repos[k];
+              var color = langColors[r.language] || '#888';
+              html += '<span class="repo-tag">';
+              html += '<span class="lang" style="background:' + esc(color) + '"></span>';
+              html += esc(r.full_name);
+              if (r.stargazers > 0) html += ' <span class="stars">\u2605' + esc(r.stargazers) + '</span>';
+              html += '</span>';
+            }
+            html += '</div>';
+            html += '</div>';
+          }
+
+          el.innerHTML = html;
+        })
+        .catch(function(err) {
+          if (err.message === 'auth') {
+            el.innerHTML = '<div class="error">Not signed in. <a href="/api/auth/login">Sign in with GitHub</a></div>';
+          } else if (err.message === 'forbidden') {
+            el.innerHTML = '<div class="error">Access denied. Admin only.</div>';
+          } else {
+            el.innerHTML = '<div class="error">Failed to load dashboard.</div>';
+          }
+        });
+
+      function formatDate(iso) {
+        if (!iso) return '';
+        try {
+          var d = new Date(iso);
+          var now = new Date();
+          var diff = now - d;
+          var mins = Math.floor(diff / 60000);
+          if (mins < 60) return mins + 'm ago';
+          var hrs = Math.floor(mins / 60);
+          if (hrs < 24) return hrs + 'h ago';
+          var days = Math.floor(hrs / 24);
+          if (days < 7) return days + 'd ago';
+          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } catch(e) {
+          return iso;
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

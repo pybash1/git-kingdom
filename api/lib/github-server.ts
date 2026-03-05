@@ -180,6 +180,7 @@ export async function fetchRepoMetrics(
 
 /**
  * Fetch metrics for a list of repos (with concurrency limit).
+ * Uses index-based iteration to avoid race conditions on shared queue.
  */
 export async function fetchAllRepoMetrics(
   repos: [string, string][],
@@ -187,13 +188,20 @@ export async function fetchAllRepoMetrics(
   concurrency = 10,
 ): Promise<KingdomMetrics[]> {
   const results: KingdomMetrics[] = [];
-  const queue = [...repos];
+  let nextIndex = 0; // atomic-safe: JS is single-threaded between awaits
 
   async function worker() {
-    while (queue.length > 0) {
-      const [owner, repo] = queue.shift()!;
-      const metrics = await fetchRepoMetrics(owner, repo, token);
-      if (metrics) results.push(metrics);
+    while (true) {
+      const idx = nextIndex++;
+      if (idx >= repos.length) break;
+      const [owner, repo] = repos[idx];
+      try {
+        const metrics = await fetchRepoMetrics(owner, repo, token);
+        if (metrics) results.push(metrics);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`[github] Failed to fetch ${owner}/${repo}: ${msg}`);
+      }
     }
   }
 

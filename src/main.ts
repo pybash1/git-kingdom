@@ -275,11 +275,11 @@ async function boot() {
           if (result) {
             console.log(`[OAuth] Joined! Added ${result.addedRepos} repos.`);
             invalidateWorldCache(); // next fetch gets fresh data
-            trackWorldJoined({ added_repos: result.addedRepos });
+            trackWorldJoined({ user_login: user.login, added_repos: result.addedRepos });
           }
-        }).catch(() => {});
+        }).catch(err => console.warn('[OAuth] Auto-join failed:', err?.message || err));
       }
-    }).catch(() => {});
+    }).catch(err => console.warn('[OAuth] User fetch failed:', err?.message || err));
 
     return bootDirect(params, loadingEl, route.repoName);
   }

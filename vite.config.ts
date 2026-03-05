@@ -91,6 +91,7 @@ export default defineConfig({
         changelog: resolve(__dirname, 'changelog.html'),
         'how-it-works': resolve(__dirname, 'how-it-works.html'),
         faq: resolve(__dirname, 'faq.html'),
+        admin: resolve(__dirname, 'admin.html'),
       },
     },
   },

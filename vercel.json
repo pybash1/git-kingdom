@@ -11,6 +11,7 @@
     { "source": "/changelog", "destination": "/changelog.html" },
     { "source": "/how-it-works", "destination": "/how-it-works.html" },
     { "source": "/faq", "destination": "/faq.html" },
+    { "source": "/admin", "destination": "/admin.html" },
     { "source": "/:path*", "destination": "/api/page" }
   ]
 }
