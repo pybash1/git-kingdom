@@ -771,7 +771,7 @@ export class WorldScene extends Phaser.Scene {
       stat('Repos', repoCount.toString()),
       `<div class="stat"><span class="stat-label">Top Repos</span><span class="stat-value">${topRepoLinks}</span></div>`,
       `<button id="enter-city-btn" class="rpgui-button golden" style="width:100%;margin-top:8px">
-        <p>🏰 Enter the City of ${esc(k.language)}</p>
+        <p>🏰 Enter ${esc(k.language)}</p>
       </button>`,
     ].join('');
 

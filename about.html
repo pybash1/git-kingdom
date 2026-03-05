@@ -108,18 +108,55 @@
     .cta:hover { transform: scale(1.03); }
     .page-footer {
       border-top: 2px solid #2a2418;
-      padding: 24px;
+      padding: 24px 24px 80px;
       text-align: center;
       font-size: 12px;
       color: #5a4a30;
     }
     .page-footer a { color: #8a7a58; text-decoration: none; margin: 0 10px; }
     .page-footer a:hover { color: #ffd700; }
+    .floating-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, rgba(22,33,62,0.95), rgba(26,26,46,0.98));
+      border-top: 2px solid #8b6914;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .floating-bar a {
+      font-family: 'Silkscreen', monospace;
+      color: #a89060;
+      text-decoration: none;
+      font-size: 10px;
+      letter-spacing: 1px;
+      transition: color 0.2s;
+    }
+    .floating-bar a:hover { color: #ffd700; }
+    .floating-bar a.active { color: #ffd700; }
+    .floating-bar .bar-cta {
+      background: linear-gradient(180deg, #e8a020, #c07818);
+      color: #1a1a2e;
+      padding: 6px 16px;
+      border-radius: 4px;
+      font-size: 10px;
+      margin-left: 8px;
+    }
+    .floating-bar .bar-cta:hover { color: #1a1a2e; transform: scale(1.03); }
     @media (max-width: 600px) {
       nav { gap: 12px; }
       nav a { font-size: 9px; }
       h1 { font-size: 22px; }
       .content { padding: 32px 16px 60px; }
+      .floating-bar { gap: 10px; padding: 8px 12px; }
+      .floating-bar a { font-size: 8px; }
     }
   </style>
 </head>
@@ -192,14 +229,16 @@
   </main>
 
   <footer class="page-footer">
-    <p>
-      <a href="/about">About</a>
-      <a href="/how-it-works">How It Works</a>
-      <a href="/faq">FAQ</a>
-      <a href="/privacy">Privacy</a>
-      <a href="/changelog">Changelog</a>
-    </p>
-    <p style="margin-top:8px">Created by <a href="https://github.com/rgourley" style="color:#a89060">Rob Gourley</a></p>
+    <p>Created by <a href="https://github.com/rgourley" style="color:#a89060">Rob Gourley</a></p>
   </footer>
+
+  <div class="floating-bar">
+    <a href="/about" class="active">About</a>
+    <a href="/how-it-works">How It Works</a>
+    <a href="/faq">FAQ</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/changelog">Changelog</a>
+    <a href="/" class="bar-cta">Enter the Kingdom</a>
+  </div>
 </body>
 </html>
