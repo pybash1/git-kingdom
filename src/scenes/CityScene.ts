@@ -31,17 +31,19 @@ function stepCityZoom(direction: number): number {
 }
 
 /**
- * Compute a freshness score (0.3..1.0) from a repo's pushed_at date.
- * Repos pushed within the last month → 1.0 (fully opaque)
- * Repos pushed 2+ years ago → 0.3 (faded)
- * Linear ramp in between.
+ * Compute a freshness score (0..0.8) from a repo's pushed_at date.
+ * Repos pushed in the last 3 days → 0.8 (brightest)
+ * Repos pushed 30+ days ago → 0 (no label, hover-only)
+ * Smooth ease-out curve so most repos are faded.
  */
 function repoFreshness(pushedAt: string | undefined): number {
-  if (!pushedAt) return 0.5;
-  const ageMs = Date.now() - new Date(pushedAt).getTime();
-  const ageMonths = ageMs / (1000 * 60 * 60 * 24 * 30);
-  // 0 months → 1.0, 24 months → 0.3
-  return Phaser.Math.Clamp(1.0 - (ageMonths / 24) * 0.7, 0.3, 1.0);
+  if (!pushedAt) return 0;
+  const ageDays = (Date.now() - new Date(pushedAt).getTime()) / (1000 * 60 * 60 * 24);
+  if (ageDays <= 3) return 0.8;       // very fresh — bright
+  if (ageDays >= 30) return 0;         // stale — no label (hover-only)
+  // 3..30 days → ease-out from 0.8 to 0
+  const t = (ageDays - 3) / 27;        // 0..1 over the 27-day window
+  return 0.8 * (1 - t * t);            // quadratic ease-out: fades faster at first
 }
 
 // Building rank colors for labels (8 tiers)
@@ -1108,11 +1110,17 @@ export class CityScene extends Phaser.Scene {
       const effectiveScale = Phaser.Math.Clamp(1 / zoom, 0.15, 2.0) / labelScale;
 
       // Simplified LOD: only major building labels exist now, minor are hover-only
-      // Alpha is capped by freshness (recently pushed repos = bright, stale = faded)
+      // Alpha is capped by freshness (recently pushed repos = bright, stale = hidden)
       for (const { text, rank, buildingIndex, freshness } of this.buildingLabels) {
         text.setScale(effectiveScale);
         // Don't re-show a label that's hidden because we're hovering that building
         if (buildingIndex === this.hoveredBuildingIndex && buildingIndex >= 0) continue;
+
+        // Stale repos (freshness 0) get no persistent label — hover-only
+        if (freshness <= 0) {
+          text.setVisible(false);
+          continue;
+        }
 
         const isMajor = rank === 'citadel' || rank === 'castle';
         const isUpper = rank === 'palace' || rank === 'keep';
