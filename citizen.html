@@ -5,37 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Character Sheet | Git Kingdom</title>
   <meta name="robots" content="index, follow" />
+  <meta name="description" content="View this citizen's RPG character sheet on Git Kingdom — stats, badges, kingdoms, and repos all derived from real GitHub activity." />
   <link rel="icon" href="/favicon.ico" />
+  <link rel="canonical" id="canonical-link" />
+
+  <!-- OG / Twitter (defaults, updated dynamically by JS) -->
+  <meta property="og:type" content="profile" />
+  <meta property="og:site_name" content="Git Kingdom" />
+  <meta property="og:title" id="og-title" content="Character Sheet | Git Kingdom" />
+  <meta property="og:description" id="og-desc" content="View this citizen's RPG character sheet — stats, badges, and kingdoms derived from real GitHub data." />
+  <meta property="og:image" id="og-image" content="https://www.gitkingdom.com/assets/og-image.jpg" />
+  <meta property="og:url" id="og-url" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" id="tw-title" content="Character Sheet | Git Kingdom" />
+  <meta name="twitter:description" id="tw-desc" content="View this citizen's RPG character sheet — stats, badges, and kingdoms derived from real GitHub data." />
+  <meta name="twitter:image" id="tw-image" content="https://www.gitkingdom.com/assets/og-image.jpg" />
+
   <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet" />
+  <link href="/vendor/rpgui/rpgui.min.css" rel="stylesheet" />
+  <script src="/vendor/rpgui/rpgui.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Blurred tiled town background */
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #1a1a2e;
-      color: #d4c8a0;
-      line-height: 1.6;
+      color: #e0d8b8;
+      line-height: 1.5;
       min-height: 100vh;
+      background: #1a1508;
+      overflow-x: hidden;
     }
+    .bg-layer {
+      position: fixed;
+      top: -20px; left: -20px; right: -20px; bottom: -20px;
+      background: url('/assets/town/town_B.png') repeat;
+      background-size: 512px;
+      filter: blur(6px) brightness(0.35);
+      z-index: 0;
+    }
+    .bg-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at center, rgba(26,21,8,0.4) 0%, rgba(26,21,8,0.75) 100%);
+      z-index: 1;
+    }
+
+    /* Header bar */
     .page-header {
-      background: linear-gradient(180deg, #16213e 0%, #1a1a2e 100%);
+      position: relative;
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(26,21,8,0.95), rgba(26,21,8,0.85));
       border-bottom: 3px solid #8b6914;
-      padding: 16px 24px;
+      padding: 12px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      backdrop-filter: blur(4px);
     }
     .page-header a { text-decoration: none; }
     .logo {
       font-family: 'Silkscreen', monospace;
       color: #ffd700;
-      font-size: 20px;
-      letter-spacing: 3px;
+      font-size: 18px;
+      letter-spacing: 2px;
       text-shadow: 0 0 10px rgba(255,215,0,0.3);
     }
-    .logo span { background: #8b6914; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 8px; letter-spacing: 1px; }
+    .logo span {
+      background: #8b6914;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      margin-left: 8px;
+      letter-spacing: 1px;
+    }
     .back-link {
       font-family: 'Silkscreen', monospace;
-      color: #a89060;
+      color: #c0a870;
       text-decoration: none;
       font-size: 11px;
       letter-spacing: 1px;
@@ -44,208 +91,271 @@
 
     /* Sheet container */
     .sheet-wrap {
-      max-width: 600px;
+      position: relative;
+      z-index: 10;
+      max-width: 820px;
       margin: 32px auto;
-      padding: 0 16px 80px;
+      padding: 0 20px 100px;
     }
-    .sheet {
-      background: linear-gradient(180deg, rgba(40,35,25,0.9) 0%, rgba(30,28,22,0.95) 100%);
-      border: 2px solid #5a4a20;
-      border-radius: 12px;
+    .sheet.rpgui-container.framed-golden {
+      position: relative !important;
+      display: block !important;
+      width: auto !important;
+      padding: 0 !important;
       overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
 
     /* Header section */
-    .sheet-header {
+    .cs-header {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 24px;
+      gap: 18px;
+      padding: 24px 28px;
       background: linear-gradient(180deg, rgba(139,105,20,0.15) 0%, transparent 100%);
       border-bottom: 1px solid #3a3020;
+      position: relative;
     }
-    .sheet-avatar {
+    .cs-avatar {
       width: 80px;
       height: 80px;
       border-radius: 50%;
       border: 3px solid #8b6914;
       box-shadow: 0 0 16px rgba(255,215,0,0.2);
     }
-    .sheet-identity { flex: 1; min-width: 0; }
-    .sheet-login {
+    .cs-identity { flex: 1; min-width: 0; }
+    .cs-login {
       font-family: 'Silkscreen', monospace;
-      font-size: 18px;
+      font-size: 20px;
       color: #ffd700;
       letter-spacing: 1px;
     }
-    .sheet-title {
-      font-size: 13px;
-      color: #c0a870;
-      margin-top: 2px;
+    .cs-title {
+      font-size: 15px;
+      color: #f0e8cc;
+      margin-top: 3px;
     }
-    .sheet-level {
+    .cs-level {
       font-family: 'Silkscreen', monospace;
-      font-size: 11px;
-      color: #8a7a58;
+      font-size: 12px;
+      color: #d0c090;
       margin-top: 4px;
       letter-spacing: 1px;
     }
-    .sheet-contribs {
-      font-size: 12px;
-      color: #8a7a58;
+    .cs-contribs {
+      font-size: 13px;
+      color: #b8a878;
       margin-top: 2px;
     }
 
     /* Sections */
-    .sheet-section {
-      padding: 16px 24px;
+    .cs-section {
+      padding: 16px 28px;
       border-bottom: 1px solid #2a2418;
     }
-    .sheet-section:last-child { border-bottom: none; }
-    .section-title {
+    .cs-section:last-child { border-bottom: none; }
+    .cs-section-title {
       font-family: 'Silkscreen', monospace;
       font-size: 11px;
-      color: #8a7a58;
+      color: #f0e8cc;
       letter-spacing: 2px;
       text-transform: uppercase;
       margin-bottom: 10px;
     }
 
     /* Badges */
-    .badges {
+    .cs-badges {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
     }
-    .badge {
+    .cs-badge {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       background: rgba(139,105,20,0.2);
       border: 1px solid #4a3a18;
       border-radius: 12px;
-      padding: 3px 10px 3px 6px;
-      font-size: 11px;
-      color: #d4c8a0;
+      padding: 4px 12px 4px 7px;
+      font-size: 13px;
+      color: #e0d8b8;
+      cursor: help;
+      position: relative;
     }
-    .badge-icon { font-size: 13px; }
+    .cs-badge[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1508;
+      color: #e8dbb0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: 1px solid #5a4a20;
+      white-space: nowrap;
+      z-index: 400;
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .cs-badge-icon { font-size: 15px; }
 
     /* Stats */
-    .stat-row {
+    .cs-stat-row {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 8px;
     }
-    .stat-label {
+    .cs-stat-label {
       font-family: 'Silkscreen', monospace;
-      font-size: 10px;
-      color: #a89060;
-      width: 90px;
-      letter-spacing: 1px;
+      font-size: 11px;
+      color: #d0b878;
+      width: 130px;
+      letter-spacing: 0.5px;
       white-space: nowrap;
     }
-    .stat-bar-bg {
+    .cs-stat-bar {
       flex: 1;
-      height: 12px;
+      height: 14px;
       background: rgba(255,255,255,0.06);
-      border-radius: 6px;
+      border-radius: 7px;
       overflow: hidden;
     }
-    .stat-bar-fill {
+    .cs-stat-fill {
       height: 100%;
-      border-radius: 6px;
+      border-radius: 7px;
       transition: width 0.6s ease-out;
     }
-    .stat-bar-fill.power { background: linear-gradient(90deg, #c07818, #e8a020); }
-    .stat-bar-fill.reach { background: linear-gradient(90deg, #b8860b, #ffd700); }
-    .stat-bar-fill.versatility { background: linear-gradient(90deg, #2e8b57, #3cb371); }
-    .stat-value {
+    .cs-stat-fill.power { background: linear-gradient(90deg, #c07818, #e8a020); }
+    .cs-stat-fill.reach { background: linear-gradient(90deg, #b8860b, #ffd700); }
+    .cs-stat-fill.versatility { background: linear-gradient(90deg, #2e8b57, #3cb371); }
+    .cs-stat-val {
       font-family: 'Silkscreen', monospace;
-      font-size: 10px;
-      color: #c0b088;
-      width: 24px;
+      font-size: 12px;
+      color: #e0d0a0;
+      width: 26px;
       text-align: right;
     }
 
     /* Kingdoms */
-    .kingdoms {
+    .cs-kingdoms {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
     }
-    .kingdom-tag {
+    .cs-kingdom {
       font-family: 'Silkscreen', monospace;
-      font-size: 10px;
-      color: #c0a870;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid #3a3020;
+      font-size: 11px;
+      color: #dcc480;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid #4a3a20;
       border-radius: 4px;
-      padding: 3px 8px;
+      padding: 3px 10px;
       letter-spacing: 1px;
     }
 
-    /* Repos */
-    .repo-item {
+    /* Repos / Inventory */
+    .cs-repos-scroll {
+      max-height: 360px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #5a4a20 transparent;
+    }
+    .cs-repos-scroll::-webkit-scrollbar { width: 6px; }
+    .cs-repos-scroll::-webkit-scrollbar-track { background: transparent; }
+    .cs-repos-scroll::-webkit-scrollbar-thumb { background: #5a4a20; border-radius: 3px; }
+    .cs-repo {
       display: flex;
       align-items: center;
       gap: 8px;
       padding: 6px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-      font-size: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px;
     }
-    .repo-item:last-child { border-bottom: none; }
-    .repo-icon { font-size: 14px; width: 20px; text-align: center; }
-    .repo-name {
+    .cs-repo:last-child { border-bottom: none; }
+    .cs-repo-icon { font-size: 15px; width: 22px; text-align: center; }
+    .cs-repo-name {
       flex: 1;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .repo-name a { color: #c0a870; text-decoration: none; }
-    .repo-name a:hover { color: #ffd700; }
-    .repo-meta {
-      font-size: 10px;
-      color: #6a5a40;
+    .cs-repo-name a { color: #dcc480; text-decoration: none; }
+    .cs-repo-name a:hover { color: #ffd700; text-decoration: underline; }
+    .cs-repo-meta {
+      font-size: 11px;
+      color: #a09068;
       white-space: nowrap;
       display: flex;
       gap: 8px;
     }
-    .repo-stars { color: #ffd700; }
-    .repo-king { color: #ffd700; font-size: 10px; }
+    .cs-repo-stars { color: #ffd700; }
+    .cs-repo-king { color: #ffd700; }
 
-    /* Footer actions */
-    .sheet-actions {
+    /* Footer actions + social share */
+    .cs-actions {
       display: flex;
-      gap: 12px;
-      padding: 16px 24px;
+      gap: 10px;
+      padding: 16px 28px;
       justify-content: center;
+      flex-wrap: wrap;
     }
-    .sheet-btn {
+    .cs-btn {
       font-family: 'Silkscreen', monospace;
       font-size: 10px;
       letter-spacing: 1px;
       text-decoration: none;
       padding: 8px 16px;
-      border-radius: 6px;
-      border: 1px solid #5a4a20;
-      color: #c0a870;
+      border-radius: 4px;
+      border: 1px solid #6a5a28;
+      color: #dcc480;
       background: rgba(255,255,255,0.04);
       cursor: pointer;
       transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
-    .sheet-btn:hover { background: rgba(139,105,20,0.2); color: #ffd700; border-color: #8b6914; }
-    .sheet-btn.primary {
+    .cs-btn:hover { background: rgba(139,105,20,0.2); color: #ffd700; border-color: #8b6914; }
+    .cs-btn.primary {
       background: linear-gradient(180deg, #e8a020, #c07818);
-      color: #1a1a2e;
+      color: #1a1508;
       border: none;
+      font-weight: bold;
     }
-    .sheet-btn.primary:hover { transform: scale(1.03); }
+    .cs-btn.primary:hover { transform: scale(1.03); }
+    .cs-btn svg { width: 14px; height: 14px; fill: currentColor; vertical-align: middle; }
+
+    /* Share icons — top-right of header */
+    .cs-share-icons {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      display: flex;
+      gap: 6px;
+    }
+    .cs-share-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #a09068;
+      background: rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .cs-share-icon:hover { color: #ffd700; background: rgba(139,105,20,0.3); border-color: #8b6914; }
+    .cs-share-icon svg { width: 14px; height: 14px; fill: currentColor; }
 
     /* Loading / error */
-    .loading { text-align: center; padding: 64px; color: #8a7a58; font-size: 14px; }
+    .loading { text-align: center; padding: 64px; color: #b0a070; font-size: 14px; }
     .error { text-align: center; padding: 64px; color: #c04040; font-size: 14px; }
     .error a { color: #ffd700; text-decoration: none; }
 
@@ -255,7 +365,7 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: linear-gradient(180deg, rgba(22,33,62,0.95), rgba(26,26,46,0.98));
+      background: linear-gradient(180deg, rgba(26,21,8,0.95), rgba(26,21,8,0.98));
       border-top: 2px solid #8b6914;
       padding: 10px 24px;
       display: flex;
@@ -265,7 +375,7 @@
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
-    .floating-bar .bar-copy { font-size: 10px; color: #a89060; white-space: nowrap; }
+    .floating-bar .bar-copy { font-size: 10px; color: #a09068; white-space: nowrap; }
     .floating-bar .bar-copy a { font-size: inherit; color: #c0a870; }
     .floating-bar .bar-links { display: flex; align-items: center; gap: 20px; }
     .floating-bar a {
@@ -279,15 +389,27 @@
     .floating-bar a:hover { color: #ffd700; }
     .floating-bar .bar-cta {
       background: linear-gradient(180deg, #e8a020, #c07818);
-      color: #1a1a2e;
+      color: #1a1508;
       padding: 6px 16px;
       border-radius: 4px;
       font-weight: bold;
     }
-    .floating-bar .bar-cta:hover { color: #1a1a2e; }
+    .floating-bar .bar-cta:hover { color: #1a1508; }
+
+    @media (max-width: 600px) {
+      .cs-header { flex-direction: column; text-align: center; padding: 16px; }
+      .cs-avatar { width: 64px; height: 64px; }
+      .cs-stat-label { width: 100px; font-size: 10px; }
+      .cs-section { padding: 14px 16px; }
+      .cs-actions { padding: 14px 16px; }
+      .floating-bar { flex-direction: column; gap: 8px; padding: 8px 16px; }
+    }
   </style>
 </head>
 <body>
+  <div class="bg-layer"></div>
+  <div class="bg-overlay"></div>
+
   <header class="page-header">
     <a href="/"><div class="logo">GIT KINGDOM <span>CHARACTER SHEET</span></div></a>
     <a href="/" class="back-link">← Back to Kingdom</a>
@@ -295,7 +417,9 @@
 
   <div class="sheet-wrap">
     <div id="sheet">
-      <div class="loading">Summoning citizen...</div>
+      <div class="rpgui-container framed-golden" style="padding:0">
+        <div class="loading">Summoning citizen...</div>
+      </div>
     </div>
   </div>
 
@@ -312,22 +436,24 @@
     (function() {
       var el = document.getElementById('sheet');
 
-      // Language colors
-      var langColors = {
-        JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572a5',
-        Java: '#b07219', Go: '#00add8', Rust: '#dea584', Ruby: '#701516',
-        'C++': '#f34b7d', C: '#555555', 'C#': '#178600', Swift: '#f05138',
-        Kotlin: '#a97bff', PHP: '#4f5d95', Shell: '#89e051', Lua: '#000080',
-        Dart: '#00b4ab', Scala: '#c22d40', Zig: '#ec915c', Elixir: '#6e4a7e',
+      var BADGE_TIPS = {
+        titan: '1,000+ total contributions',
+        centurion: '100+ total contributions',
+        crown: 'Top contributor to at least one repo',
+        founder: 'Owns a repo in the kingdom',
+        on_fire: 'Contributed to a repo pushed in the last 3 days',
+        polyglot: 'Contributes across 3+ languages',
+        star_bearer: '1,000+ total stars across repos',
+        team_player: 'Contributes to 5+ repos',
+        lone_wolf: 'Contributes to exactly 1 repo',
       };
 
-      // Repo tier icons based on stars
       function repoIcon(stars) {
-        if (stars >= 10000) return '🗡';
-        if (stars >= 1000) return '🛡';
-        if (stars >= 100) return '⚔';
-        if (stars >= 10) return '📜';
-        return '⚗';
+        if (stars >= 10000) return '\u{1F5E1}';
+        if (stars >= 1000) return '\u{1F6E1}';
+        if (stars >= 100) return '\u2694';
+        if (stars >= 10) return '\u{1F4DC}';
+        return '\u2697';
       }
 
       function esc(s) {
@@ -341,13 +467,68 @@
         return String(n);
       }
 
-      // Extract username from URL path: /citizen/username
+      // Set OG/SEO meta dynamically
+      function setMeta(d) {
+        var title = d.login + ' — ' + d.title.name + ' of ' + d.title.kingdom + ' | Git Kingdom';
+        var desc = d.title.icon + ' Level ' + d.level + ' ' + d.title.name + ' with ' + d.totalContributions.toLocaleString() + ' contributions across ' + d.repos.length + ' repos. Badges: ' + d.badges.map(function(b) { return b.label; }).join(', ') + '.';
+        var ogImage = 'https://www.gitkingdom.com/api/citizen-og?username=' + encodeURIComponent(d.login);
+        var url = window.location.href;
+
+        document.title = title;
+
+        // Update meta tags
+        var m = function(id, val) { var e = document.getElementById(id); if (e) e.setAttribute('content', val); };
+        m('og-title', title);
+        m('og-desc', desc);
+        m('og-image', ogImage);
+        m('og-url', url);
+        m('tw-title', title);
+        m('tw-desc', desc);
+        m('tw-image', ogImage);
+
+        // Set canonical
+        var canon = document.getElementById('canonical-link');
+        if (canon) canon.setAttribute('href', url);
+
+        // Add structured data
+        var ld = document.createElement('script');
+        ld.type = 'application/ld+json';
+        ld.textContent = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'ProfilePage',
+          name: title,
+          description: desc,
+          url: url,
+          mainEntity: {
+            '@type': 'Person',
+            name: d.login,
+            image: avatar,
+            url: 'https://github.com/' + d.login,
+          },
+        });
+        document.head.appendChild(ld);
+      }
+
+      // Build social share URLs
+      function shareIcons(d) {
+        var url = encodeURIComponent(window.location.href);
+        var text = encodeURIComponent(d.title.icon + ' ' + d.login + ' is a Level ' + d.level + ' ' + d.title.name + ' of ' + d.title.kingdom + ' in Git Kingdom!');
+        var h = '<div class="cs-share-icons">';
+        h += '<a class="cs-share-icon" title="Share on Twitter" href="https://twitter.com/intent/tweet?text=' + text + '&url=' + url + '" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>';
+        h += '<a class="cs-share-icon" title="Share on Facebook" href="https://www.facebook.com/sharer/sharer.php?u=' + url + '" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>';
+        h += '<a class="cs-share-icon" title="Share on LinkedIn" href="https://www.linkedin.com/sharing/share-offsite/?url=' + url + '" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>';
+        h += '<a class="cs-share-icon" title="Share on Reddit" href="https://reddit.com/submit?url=' + url + '&title=' + text + '" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg></a>';
+        h += '<button class="cs-share-icon" title="Copy link" id="cs-copy-btn"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>';
+        h += '</div>';
+        return h;
+      }
+
       var path = window.location.pathname;
       var parts = path.split('/').filter(Boolean);
       var username = parts.length >= 2 ? parts[1] : null;
 
       if (!username) {
-        el.innerHTML = '<div class="error">No citizen specified. <a href="/">Return to Kingdom</a></div>';
+        el.innerHTML = '<div class="rpgui-container framed-golden" style="padding:0"><div class="error">No citizen specified. <a href="/">Return to Kingdom</a></div></div>';
         return;
       }
 
@@ -360,109 +541,120 @@
           return res.json();
         })
         .then(function(d) {
-          document.title = d.login + ' — ' + d.title.name + ' | Git Kingdom';
+          // Update OG/SEO meta
+          setMeta(d);
 
-          var html = '<div class="sheet">';
+          var html = '<div class="sheet rpgui-container framed-golden">';
 
           // Header
-          html += '<div class="sheet-header">';
-          html += '<img class="sheet-avatar" src="https://github.com/' + esc(d.login) + '.png?size=160" alt="" />';
-          html += '<div class="sheet-identity">';
-          html += '<div class="sheet-login">' + esc(d.title.icon) + ' ' + esc(d.login) + '</div>';
-          html += '<div class="sheet-title">' + esc(d.title.name) + ' of the ' + esc(d.title.kingdom) + ' Kingdom</div>';
-          html += '<div class="sheet-level">Level ' + d.level + ' · ' + fmtNum(d.xp) + ' XP</div>';
-          html += '<div class="sheet-contribs">' + d.totalContributions.toLocaleString() + ' contributions across ' + d.repos.length + ' repos</div>';
-          html += '</div></div>';
+          html += '<div class="cs-header">';
+          html += '<img class="cs-avatar" src="https://github.com/' + esc(d.login) + '.png?size=160" alt="" />';
+          html += '<div class="cs-identity">';
+          html += '<div class="cs-login">' + esc(d.title.icon) + ' ' + esc(d.login) + '</div>';
+          html += '<div class="cs-title">' + esc(d.title.name) + ' of ' + esc(d.title.kingdom) + '</div>';
+          html += '<div class="cs-level">Level ' + d.level + ' \u00b7 ' + fmtNum(d.xp) + ' XP</div>';
+          html += '<div class="cs-contribs">' + d.totalContributions.toLocaleString() + ' contributions across ' + d.repos.length + ' repos</div>';
+          html += '</div>';
+          html += shareIcons(d);
+          html += '</div>';
 
           // Badges
           if (d.badges.length > 0) {
-            html += '<div class="sheet-section">';
-            html += '<div class="section-title">Badges</div>';
-            html += '<div class="badges">';
+            html += '<div class="cs-section">';
+            html += '<div class="cs-section-title">Badges</div>';
+            html += '<div class="cs-badges">';
             for (var i = 0; i < d.badges.length; i++) {
               var b = d.badges[i];
-              html += '<span class="badge"><span class="badge-icon">' + esc(b.icon) + '</span> ' + esc(b.label) + '</span>';
+              var tip = BADGE_TIPS[b.id] || '';
+              html += '<span class="cs-badge" data-tip="' + esc(tip) + '"><span class="cs-badge-icon">' + esc(b.icon) + '</span> ' + esc(b.label) + '</span>';
             }
             html += '</div></div>';
           }
 
           // Stats
-          html += '<div class="sheet-section">';
-          html += '<div class="section-title">Stats</div>';
-
+          html += '<div class="cs-section">';
+          html += '<div class="cs-section-title">Stats</div>';
           var stats = [
-            { key: 'power', label: '⚔ Power', value: d.stats.power },
-            { key: 'reach', label: '⭐ Reach', value: d.stats.reach },
-            { key: 'versatility', label: '🌐 Versatility', value: d.stats.versatility },
+            { key: 'power', label: '\u2694 Power', value: d.stats.power },
+            { key: 'reach', label: '\u2B50 Reach', value: d.stats.reach },
+            { key: 'versatility', label: '\uD83C\uDF10 Versatility', value: d.stats.versatility },
           ];
           for (var si = 0; si < stats.length; si++) {
             var st = stats[si];
             var pct = (st.value / 20 * 100).toFixed(0);
-            html += '<div class="stat-row">';
-            html += '<span class="stat-label">' + st.label + '</span>';
-            html += '<div class="stat-bar-bg"><div class="stat-bar-fill ' + st.key + '" style="width:' + pct + '%"></div></div>';
-            html += '<span class="stat-value">' + st.value + '</span>';
+            html += '<div class="cs-stat-row">';
+            html += '<span class="cs-stat-label">' + st.label + '</span>';
+            html += '<div class="cs-stat-bar"><div class="cs-stat-fill ' + st.key + '" style="width:' + pct + '%"></div></div>';
+            html += '<span class="cs-stat-val">' + st.value + '</span>';
             html += '</div>';
           }
           html += '</div>';
 
           // Kingdoms
           if (d.languages.length > 0) {
-            html += '<div class="sheet-section">';
-            html += '<div class="section-title">Kingdoms</div>';
-            html += '<div class="kingdoms">';
+            html += '<div class="cs-section">';
+            html += '<div class="cs-section-title">Kingdoms</div>';
+            html += '<div class="cs-kingdoms">';
             for (var li = 0; li < d.languages.length; li++) {
-              html += '<span class="kingdom-tag">' + esc(d.languages[li]) + '</span>';
+              html += '<span class="cs-kingdom">' + esc(d.languages[li]) + '</span>';
             }
             html += '</div></div>';
           }
 
-          // Repos
+          // Inventory (repos) — max 5
           if (d.repos.length > 0) {
-            html += '<div class="sheet-section">';
-            html += '<div class="section-title">Inventory (' + d.repos.length + ' repos)</div>';
-            for (var ri = 0; ri < d.repos.length; ri++) {
-              var r = d.repos[ri];
-              html += '<div class="repo-item">';
-              html += '<span class="repo-icon">' + repoIcon(r.stargazers) + '</span>';
-              html += '<span class="repo-name"><a href="https://github.com/' + esc(r.full_name) + '" target="_blank">' + esc(r.full_name) + '</a></span>';
-              html += '<span class="repo-meta">';
-              if (r.is_king) html += '<span class="repo-king">👑</span>';
-              html += '<span class="repo-stars">★' + fmtNum(r.stargazers) + '</span>';
+            var shown = d.repos.slice(0, 5);
+            html += '<div class="cs-section">';
+            html += '<div class="cs-section-title">Inventory (' + d.repos.length + ' repos)</div>';
+            for (var ri = 0; ri < shown.length; ri++) {
+              var r = shown[ri];
+              html += '<div class="cs-repo">';
+              html += '<span class="cs-repo-icon">' + repoIcon(r.stargazers) + '</span>';
+              html += '<span class="cs-repo-name"><a href="https://github.com/' + esc(r.full_name) + '" target="_blank">' + esc(r.full_name) + '</a></span>';
+              html += '<span class="cs-repo-meta">';
+              if (r.is_king) html += '<span class="cs-repo-king">\uD83D\uDC51</span>';
+              html += '<span class="cs-repo-stars">\u2605' + fmtNum(r.stargazers) + '</span>';
               if (r.language) html += '<span>' + esc(r.language) + '</span>';
               html += '</span>';
               html += '</div>';
+            }
+            if (d.repos.length > 5) {
+              html += '<div style="text-align:center;margin-top:8px"><a href="https://github.com/' + esc(d.login) + '?tab=repositories" target="_blank" style="color:#b0a070;font-size:11px;text-decoration:none">View all ' + d.repos.length + ' repos on GitHub \u2192</a></div>';
             }
             html += '</div>';
           }
 
           // Actions
-          html += '<div class="sheet-actions">';
-          html += '<a href="https://github.com/' + esc(d.login) + '" target="_blank" class="sheet-btn primary">View on GitHub</a>';
-          html += '<button class="sheet-btn" onclick="copySheet()">Share Link</button>';
+          html += '<div class="cs-actions">';
+          html += '<a href="https://github.com/' + esc(d.login) + '" target="_blank" class="cs-btn primary">View on GitHub</a>';
           html += '</div>';
 
           html += '</div>'; // .sheet
           el.innerHTML = html;
+
+          // Wire copy link button
+          var copyBtn = document.getElementById('cs-copy-btn');
+          if (copyBtn) {
+            copyBtn.addEventListener('click', function() {
+              var url = window.location.href;
+              if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(function() {
+                  copyBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Copied!';
+                  setTimeout(function() {
+                    copyBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy Link';
+                  }, 2000);
+                });
+              }
+            });
+          }
         })
         .catch(function(err) {
           if (err.message === 'not_found') {
-            el.innerHTML = '<div class="error">Citizen "' + esc(username) + '" not found in the kingdom.<br><br><a href="/">Return to Kingdom</a></div>';
+            el.innerHTML = '<div class="rpgui-container framed-golden" style="padding:0"><div class="error">Citizen "' + esc(username) + '" not found in the kingdom.<br><br><a href="/">Return to Kingdom</a></div></div>';
           } else {
-            el.innerHTML = '<div class="error">Failed to load character sheet.<br><br><a href="/">Return to Kingdom</a></div>';
+            el.innerHTML = '<div class="rpgui-container framed-golden" style="padding:0"><div class="error">Failed to load character sheet.<br><br><a href="/">Return to Kingdom</a></div></div>';
           }
         });
-
-      // Share link
-      window.copySheet = function() {
-        var url = window.location.href;
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(url).then(function() {
-            var btn = document.querySelector('.sheet-btn:not(.primary)');
-            if (btn) { btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = 'Share Link'; }, 2000); }
-          });
-        }
-      };
     })();
   </script>
 </body>

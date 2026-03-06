@@ -171,9 +171,9 @@
       transform: translate(-50%, -50%);
       bottom: auto !important;
       padding: 0 !important;
-      min-width: 340px;
-      max-width: 520px;
-      width: 90vw;
+      min-width: 360px;
+      max-width: 640px;
+      width: 92vw;
       max-height: 80vh;
       overflow-y: auto;
       display: none;
@@ -197,14 +197,14 @@
     #sheet-panel .sp-identity { flex: 1; min-width: 0; }
     #sheet-panel .sp-login {
       font-family: 'Silkscreen', monospace;
-      font-size: 14px;
+      font-size: 16px;
       color: #ffd700;
       letter-spacing: 1px;
     }
-    #sheet-panel .sp-title { font-size: 11px; color: #c0a870; margin-top: 1px; }
+    #sheet-panel .sp-title { font-size: 13px; color: #f0e8cc; margin-top: 2px; }
     #sheet-panel .sp-level {
       font-family: 'Silkscreen', monospace;
-      font-size: 9px; color: #8a7a58;
+      font-size: 11px; color: #d0c090;
       margin-top: 3px; letter-spacing: 1px;
     }
     #sheet-panel .sp-section {
@@ -214,7 +214,7 @@
     #sheet-panel .sp-section:last-child { border-bottom: none; }
     #sheet-panel .sp-section-title {
       font-family: 'Silkscreen', monospace;
-      font-size: 9px; color: #8a7a58;
+      font-size: 10px; color: #e8dbb0;
       letter-spacing: 2px; text-transform: uppercase;
       margin-bottom: 8px;
     }
@@ -225,20 +225,39 @@
       border: 1px solid #4a3a18;
       border-radius: 10px;
       padding: 2px 8px 2px 5px;
-      font-size: 11px; color: #d4c8a0;
+      font-size: 12px; color: #e0d8b8;
       cursor: help;
+      position: relative;
     }
-    #sheet-panel .sp-badge-icon { font-size: 12px; }
+    #sheet-panel .sp-badge[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1508;
+      color: #e8dbb0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: 1px solid #5a4a20;
+      white-space: nowrap;
+      z-index: 400;
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    #sheet-panel .sp-badge-icon { font-size: 14px; }
     #sheet-panel .sp-stat-row {
       display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
     }
     #sheet-panel .sp-stat-label {
       font-family: 'Silkscreen', monospace;
-      font-size: 9px; color: #a89060; width: 80px;
-      letter-spacing: 1px; white-space: nowrap;
+      font-size: 11px; color: #d0b878; width: 120px;
+      letter-spacing: 0.5px; white-space: nowrap;
     }
     #sheet-panel .sp-stat-bar {
-      flex: 1; height: 10px;
+      flex: 1; height: 12px;
       background: rgba(255,255,255,0.06);
       border-radius: 5px; overflow: hidden;
     }
@@ -251,21 +270,30 @@
     #sheet-panel .sp-stat-fill.versatility { background: linear-gradient(90deg, #2e8b57, #3cb371); }
     #sheet-panel .sp-stat-val {
       font-family: 'Silkscreen', monospace;
-      font-size: 9px; color: #c0b088; width: 22px; text-align: right;
+      font-size: 11px; color: #e0d0a0; width: 24px; text-align: right;
     }
     #sheet-panel .sp-kingdoms { display: flex; flex-wrap: wrap; gap: 5px; }
     #sheet-panel .sp-kingdom {
       font-family: 'Silkscreen', monospace;
-      font-size: 9px; color: #c0a870;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid #3a3020;
-      border-radius: 3px; padding: 2px 7px;
+      font-size: 10px; color: #dcc480;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid #4a3a20;
+      border-radius: 3px; padding: 3px 8px;
       letter-spacing: 1px;
     }
+    #sheet-panel .sp-repos-scroll {
+      max-height: 180px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #5a4a20 transparent;
+    }
+    #sheet-panel .sp-repos-scroll::-webkit-scrollbar { width: 6px; }
+    #sheet-panel .sp-repos-scroll::-webkit-scrollbar-track { background: transparent; }
+    #sheet-panel .sp-repos-scroll::-webkit-scrollbar-thumb { background: #5a4a20; border-radius: 3px; }
     #sheet-panel .sp-repo {
       display: flex; align-items: center; gap: 6px;
-      padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
-      font-size: 11px;
+      padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px;
     }
     #sheet-panel .sp-repo:last-child { border-bottom: none; }
     #sheet-panel .sp-repo-icon { font-size: 13px; width: 18px; text-align: center; }
@@ -273,10 +301,10 @@
       flex: 1; min-width: 0; overflow: hidden;
       text-overflow: ellipsis; white-space: nowrap;
     }
-    #sheet-panel .sp-repo-name a { color: #c0a870; text-decoration: none; }
-    #sheet-panel .sp-repo-name a:hover { color: #ffd700; }
+    #sheet-panel .sp-repo-name a { color: #dcc480; text-decoration: none; }
+    #sheet-panel .sp-repo-name a:hover { color: #ffd700; text-decoration: underline; }
     #sheet-panel .sp-repo-meta {
-      font-size: 9px; color: #6a5a40; white-space: nowrap;
+      font-size: 11px; color: #a09068; white-space: nowrap;
       display: flex; gap: 6px;
     }
     #sheet-panel .sp-repo-stars { color: #ffd700; }
@@ -285,13 +313,14 @@
     }
     #sheet-panel .sp-btn {
       font-family: 'Silkscreen', monospace;
-      font-size: 9px; letter-spacing: 1px; text-decoration: none;
-      padding: 6px 12px; border-radius: 4px;
-      border: 1px solid #5a4a20; color: #c0a870;
+      font-size: 10px; letter-spacing: 1px; text-decoration: none;
+      padding: 7px 14px; border-radius: 4px;
+      border: 1px solid #6a5a28; color: #dcc480;
       background: rgba(255,255,255,0.04); cursor: pointer;
       transition: all 0.2s;
     }
     #sheet-panel .sp-btn:hover { background: rgba(139,105,20,0.2); color: #ffd700; border-color: #8b6914; }
+    #sheet-panel .sp-share-btn { min-width: 80px; }
 
     /* Close buttons for panels */
     #info-close, #sheet-close {
@@ -332,14 +361,15 @@
     /* ─── Legend toggle button (top-right, below music) ─── */
     #legend-toggle {
       position: fixed !important;
-      top: 92px;
+      top: 96px;
       right: 12px;
       z-index: 200;
       display: none;
-      min-width: auto !important;
-      width: auto !important;
+      min-width: 140px !important;
+      width: 140px !important;
       height: auto !important;
-      padding: 6px 12px !important;
+      padding: 6px 14px !important;
+      text-align: center;
     }
     #legend-toggle p { font-size: 8px !important; margin: 0; }
 
@@ -399,6 +429,49 @@
       font-size: 9px;
       margin-left: auto;
     }
+
+    /* ─── City view: Buildings + Citizens buttons ─── */
+    .city-menu-btn {
+      position: fixed !important;
+      right: 12px;
+      z-index: 200;
+      display: none;
+      min-width: 140px !important;
+      width: 140px !important;
+      height: auto !important;
+      padding: 6px 14px !important;
+      text-align: center;
+    }
+    .city-menu-btn p { font-size: 8px !important; margin: 0; }
+    #buildings-toggle { top: 96px; }
+    #citizens-toggle { top: 130px; }
+
+    .city-list-panel {
+      position: fixed !important;
+      top: 164px;
+      right: 10px;
+      padding: 6px 10px !important;
+      z-index: 300;
+      max-height: 55vh;
+      overflow-y: auto;
+      display: none;
+    }
+    .city-list-panel h3 {
+      font-size: 8px;
+      margin-bottom: 6px;
+      padding-bottom: 3px;
+    }
+    .city-panel-close {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      z-index: 10;
+      min-width: 26px !important;
+      width: 26px !important;
+      height: 26px !important;
+      padding: 0 !important;
+    }
+    .city-panel-close p { font-size: 8px !important; margin: 0; line-height: 1; }
 
     /* ─── Entry Modal (RPG title screen — click to enter) ─── */
     #entry-modal {
@@ -549,7 +622,7 @@
     /* ─── Music toggle button (top-right, below header) ─── */
     #music-btn {
       position: fixed !important;
-      top: 52px;
+      top: 62px;
       right: 12px;
       z-index: 350;
       min-width: auto !important;
@@ -932,10 +1005,20 @@
     <!-- Music toggle -->
     <button id="music-btn" class="rpgui-button" title="Toggle music"><p>🔇</p></button>
 
-    <!-- Legend toggle + panel -->
+    <!-- Legend toggle + panel (world map — cities list) -->
     <button id="legend-toggle" class="rpgui-button" title="Toggle city list"><p>📜 Cities</p></button>
     <div id="legend" class="rpgui-container framed-golden">
       <button id="legend-close" class="rpgui-button" title="Close"><p>✕</p></button>
+    </div>
+
+    <!-- City view: separate Buildings + Citizens buttons & panels -->
+    <button id="buildings-toggle" class="rpgui-button city-menu-btn" title="Building list"><p>🏰 Buildings</p></button>
+    <button id="citizens-toggle" class="rpgui-button city-menu-btn" title="Citizen list"><p>👥 Citizens</p></button>
+    <div id="buildings-panel" class="rpgui-container framed-golden city-list-panel">
+      <button class="rpgui-button city-panel-close" title="Close"><p>✕</p></button>
+    </div>
+    <div id="citizens-panel" class="rpgui-container framed-golden city-list-panel">
+      <button class="rpgui-button city-panel-close" title="Close"><p>✕</p></button>
     </div>
 
     <!-- Info panel -->
@@ -1066,6 +1149,30 @@
     document.getElementById('legend-close').addEventListener('click', function(e) {
       e.stopPropagation();
       document.getElementById('legend').style.display = 'none';
+    });
+
+    // Buildings toggle button
+    document.getElementById('buildings-toggle').addEventListener('click', function() {
+      var bp = document.getElementById('buildings-panel');
+      var cp = document.getElementById('citizens-panel');
+      cp.style.display = 'none';
+      bp.style.display = bp.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Citizens toggle button
+    document.getElementById('citizens-toggle').addEventListener('click', function() {
+      var bp = document.getElementById('buildings-panel');
+      var cp = document.getElementById('citizens-panel');
+      bp.style.display = 'none';
+      cp.style.display = cp.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // City panel close buttons
+    document.querySelectorAll('.city-panel-close').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        btn.parentElement.style.display = 'none';
+      });
     });
 
     // Profile panel close button
@@ -1300,6 +1407,8 @@
 
       makeDraggable(document.getElementById('info-panel'));
       makeDraggable(document.getElementById('legend'));
+      makeDraggable(document.getElementById('buildings-panel'));
+      makeDraggable(document.getElementById('citizens-panel'));
       makeDraggable(document.getElementById('profile-panel'));
       makeDraggable(document.getElementById('sheet-panel'));
     })();

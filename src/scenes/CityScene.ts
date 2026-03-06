@@ -1586,6 +1586,21 @@ export class CityScene extends Phaser.Scene {
       if (!res.ok) throw new Error('failed');
       const d = await res.json();
       content.innerHTML = buildSheetHTML(d);
+
+      // Wire up share button
+      const shareBtn = content.querySelector('.sp-share-btn') as HTMLButtonElement | null;
+      if (shareBtn) {
+        shareBtn.addEventListener('click', () => {
+          const url = shareBtn.getAttribute('data-url') || '';
+          navigator.clipboard.writeText(url).then(() => {
+            shareBtn.textContent = '✅ Copied!';
+            setTimeout(() => { shareBtn.textContent = '📋 Share'; }, 2000);
+          }).catch(() => {
+            // Fallback: open in new tab
+            window.open(url, '_blank');
+          });
+        });
+      }
     } catch {
       content.innerHTML = '<div style="text-align:center;padding:32px;color:#8a7a58;font-size:12px">Failed to load character sheet.</div>';
     }
@@ -1638,25 +1653,32 @@ export class CityScene extends Phaser.Scene {
       backBtn.onclick = () => {
         trackCityExited();
         trackPageView('/', 'Git Kingdom | World Map');
-        const legend = document.getElementById('legend');
-        if (legend) legend.style.display = 'none';
+        // Hide city panels
+        const bp = document.getElementById('buildings-panel');
+        const cp = document.getElementById('citizens-panel');
+        const bBtn = document.getElementById('buildings-toggle');
+        const cBtn = document.getElementById('citizens-toggle');
+        if (bp) bp.style.display = 'none';
+        if (cp) cp.style.display = 'none';
+        if (bBtn) bBtn.style.display = 'none';
+        if (cBtn) cBtn.style.display = 'none';
         this.hideInfoPanel();
         this.scene.start('WorldScene', this.returnData);
       };
       leftEl.prepend(backBtn);
 
-      // Click buildings count → open legend panel (buildings tab)
+      // Click buildings count → open buildings panel
       const buildingsBtn = document.getElementById('hdr-buildings');
       if (buildingsBtn) {
         buildingsBtn.onclick = () => {
-          const legend = document.getElementById('legend');
-          if (legend) {
-            legend.style.display = legend.style.display === 'block' ? 'none' : 'block';
-            // Focus the search input
-            const searchInput = document.getElementById('legend-search') as HTMLInputElement;
+          const bp = document.getElementById('buildings-panel');
+          const cp = document.getElementById('citizens-panel');
+          if (cp) cp.style.display = 'none';
+          if (bp) {
+            bp.style.display = bp.style.display === 'block' ? 'none' : 'block';
+            const searchInput = document.getElementById('buildings-search') as HTMLInputElement;
             if (searchInput) { searchInput.value = ''; searchInput.focus(); searchInput.dispatchEvent(new Event('input')); }
-            // Scroll to top (buildings)
-            legend.scrollTop = 0;
+            bp.scrollTop = 0;
           }
         };
       }
@@ -1692,24 +1714,18 @@ export class CityScene extends Phaser.Scene {
         });
       }
 
-      // Click citizens count → open legend panel scrolled to citizens section
+      // Click citizens count → open citizens panel
       const citizensBtn = document.getElementById('hdr-citizens-btn');
       if (citizensBtn) {
         citizensBtn.onclick = () => {
-          const legend = document.getElementById('legend');
-          if (legend) {
-            legend.style.display = 'block';
-            // Clear search to show all items
-            const searchInput = document.getElementById('legend-search') as HTMLInputElement;
-            if (searchInput) { searchInput.value = ''; searchInput.dispatchEvent(new Event('input')); }
-            // Scroll to the citizens section header
-            const citizenHeader = document.getElementById('citizens-section-header');
-            if (citizenHeader) {
-              // Use requestAnimationFrame to ensure panel is visible before scrolling
-              requestAnimationFrame(() => {
-                citizenHeader.scrollIntoView({ behavior: 'instant', block: 'start' });
-              });
-            }
+          const bp = document.getElementById('buildings-panel');
+          const cp = document.getElementById('citizens-panel');
+          if (bp) bp.style.display = 'none';
+          if (cp) {
+            cp.style.display = cp.style.display === 'block' ? 'none' : 'block';
+            const searchInput = document.getElementById('citizens-search') as HTMLInputElement;
+            if (searchInput) { searchInput.value = ''; searchInput.focus(); searchInput.dispatchEvent(new Event('input')); }
+            cp.scrollTop = 0;
           }
         };
       }
@@ -1730,18 +1746,20 @@ export class CityScene extends Phaser.Scene {
   }
 
   private buildCityLegend(buildings: CityBuilding[]) {
-    const legend = document.getElementById('legend')!;
+    // Hide the world-map legend toggle (CityScene uses its own buttons)
+    const worldToggle = document.getElementById('legend-toggle');
+    if (worldToggle) worldToggle.style.display = 'none';
 
-    let html = '<div style="margin-bottom:8px">' +
-      '<input type="text" id="legend-search" placeholder="Search buildings & citizens..." />' +
-      '</div>';
-
-    const repoCount = buildings.filter(b => b.repoMetrics).length;
-    html += `<h3>${this.city.language} — ${repoCount} Repos · ${buildings.length} Buildings</h3>`;
-
-    // Group by rank (repo buildings only)
+    // ── Buildings Panel ──
+    const bPanel = document.getElementById('buildings-panel')!;
     const repoBuildings = buildings.filter(b => !b.isPublic && b.repoMetrics);
     const publicBuildings = buildings.filter(b => b.isPublic);
+    const repoCount = buildings.filter(b => b.repoMetrics).length;
+
+    let bHtml = '<div style="margin-bottom:8px">' +
+      '<input type="text" id="buildings-search" placeholder="Search buildings..." />' +
+      '</div>';
+    bHtml += `<h3>${this.city.language} — ${repoCount} Repos · ${buildings.length} Buildings</h3>`;
 
     const ranks: string[] = ['citadel', 'castle', 'palace', 'keep', 'manor', 'guild', 'cottage', 'hovel', 'camp'];
     for (const rank of ranks) {
@@ -1749,7 +1767,7 @@ export class CityScene extends Phaser.Scene {
       if (rankBuildings.length === 0) continue;
 
       const icon = RANK_ICONS[rank] || '';
-      html += `<div style="color:#7a5a30;font-size:9px;margin-top:6px;border-top:1px solid #a07848;padding-top:4px">${icon} ${rank.toUpperCase()} (${rankBuildings.length})</div>`;
+      bHtml += `<div style="color:#7a5a30;font-size:9px;margin-top:6px;border-top:1px solid #a07848;padding-top:4px">${icon} ${rank.toUpperCase()} (${rankBuildings.length})</div>`;
 
       for (const b of rankBuildings) {
         const isUser = this.isUserBuilding(b);
@@ -1758,7 +1776,7 @@ export class CityScene extends Phaser.Scene {
         const stars = b.repoMetrics!.repo.stargazers_count;
         const starsStr = stars >= 1000 ? Math.round(stars / 1000) + 'k★' : stars + '★';
 
-        html += `<div class="legend-item legend-settlement" data-bx="${b.x}" data-by="${b.y}" ` +
+        bHtml += `<div class="legend-item legend-settlement" data-bx="${b.x}" data-by="${b.y}" ` +
           `data-repo="${esc(b.repoMetrics!.repo.name.toLowerCase())}" style="font-size:9px">` +
           `<span class="legend-name" style="padding-left:4px;${nameStyle}">${starMarker}${esc(b.repoMetrics!.repo.name)}</span>` +
           `<span class="legend-tier">${starsStr}</span>` +
@@ -1766,11 +1784,10 @@ export class CityScene extends Phaser.Scene {
       }
     }
 
-    // Civic buildings section
     if (publicBuildings.length > 0) {
-      html += `<div style="color:#7a5a30;font-size:9px;margin-top:6px;border-top:1px solid #a07848;padding-top:4px">🏛 CIVIC (${publicBuildings.length})</div>`;
+      bHtml += `<div style="color:#7a5a30;font-size:9px;margin-top:6px;border-top:1px solid #a07848;padding-top:4px">🏛 CIVIC (${publicBuildings.length})</div>`;
       for (const b of publicBuildings) {
-        html += `<div class="legend-item legend-settlement" data-bx="${b.x}" data-by="${b.y}" ` +
+        bHtml += `<div class="legend-item legend-settlement" data-bx="${b.x}" data-by="${b.y}" ` +
           `data-repo="${esc((b.publicName || 'civic').toLowerCase())}" style="font-size:9px">` +
           `<span class="legend-name" style="padding-left:4px;color:#8a8a6a">🏛 ${esc(b.publicName || 'Civic')}</span>` +
           `<span class="legend-tier">${b.width}×${b.height}</span>` +
@@ -1778,77 +1795,36 @@ export class CityScene extends Phaser.Scene {
       }
     }
 
-    // Citizens section — show ALL citizens (searchable via the same search box)
-    const allCitizens = this.city.citizens;
-    const totalCitizens = allCitizens.length;
-    if (allCitizens.length > 0) {
-      html += `<div id="citizens-section-header" style="color:#7a5a30;font-size:9px;margin-top:8px;border-top:1px solid #a07848;padding-top:4px">👥 CITIZENS (${totalCitizens})</div>`;
-      for (let i = 0; i < allCitizens.length; i++) {
-        const c = allCitizens[i];
-        const isKing = this.city.king?.login === c.login;
-        const isUser = this.highlightUser === c.login.toLowerCase();
-        const { icon, title } = citizenTitle(i, totalCitizens, isKing, c.totalContributions);
-        const style = isUser ? 'color:#ffd700' : '';
-        html += `<div class="legend-item legend-citizen" data-login="${esc(c.login)}" style="font-size:9px">` +
-          `<span class="legend-name" style="padding-left:4px;${style}">${isUser ? '★ ' : ''}${icon} ${esc(c.login)}</span>` +
-          `<span class="legend-tier">${title} · ${c.totalContributions.toLocaleString()}</span>` +
-          `</div>`;
-      }
-    }
+    bPanel.innerHTML = '<button class="rpgui-button city-panel-close" title="Close"><p>✕</p></button>' + bHtml;
+    bPanel.style.display = 'none';
 
-    legend.innerHTML = '<button id="legend-close" class="rpgui-button" title="Close"><p>✕</p></button>' + html;
-    legend.style.display = 'none';
-
-    // Wire up citizen legend clicks → open citizen info card
-    legend.querySelectorAll('.legend-citizen').forEach((el) => {
-      this.trackListener(el as HTMLElement, 'click', (e) => {
+    // Wire buildings close button
+    const bClose = bPanel.querySelector('.city-panel-close');
+    if (bClose) {
+      this.trackListener(bClose as HTMLElement, 'click', (e) => {
         e.stopPropagation();
-        const login = (el as HTMLElement).dataset.login;
-        if (login) this.openCitizenByLogin(login);
-      });
-    });
-
-    // Show the toggle button
-    const toggleBtn = document.getElementById('legend-toggle');
-    if (toggleBtn) toggleBtn.style.display = 'block';
-
-    // Re-wire close button (legend innerHTML was replaced)
-    const closeBtn = legend.querySelector('#legend-close');
-    if (closeBtn) {
-      this.trackListener(closeBtn as HTMLElement, 'click', (e) => {
-        e.stopPropagation();
-        legend.style.display = 'none';
+        bPanel.style.display = 'none';
       });
     }
 
-    // Search
-    const searchInput = document.getElementById('legend-search') as HTMLInputElement;
-    if (searchInput) {
-      this.trackListener(searchInput, 'input', () => {
-        const query = searchInput.value.toLowerCase().trim();
-        // Filter buildings
-        const bItems = legend.querySelectorAll('.legend-settlement') as NodeListOf<HTMLElement>;
-        bItems.forEach(el => {
+    // Buildings search
+    const bSearch = document.getElementById('buildings-search') as HTMLInputElement;
+    if (bSearch) {
+      this.trackListener(bSearch, 'input', () => {
+        const query = bSearch.value.toLowerCase().trim();
+        const items = bPanel.querySelectorAll('.legend-settlement') as NodeListOf<HTMLElement>;
+        items.forEach(el => {
           if (!query) { el.style.display = ''; return; }
           const name = el.dataset.repo || '';
           el.style.display = name.includes(query) ? '' : 'none';
         });
-        // Filter citizens too
-        const cItems = legend.querySelectorAll('.legend-citizen') as NodeListOf<HTMLElement>;
-        cItems.forEach(el => {
-          if (!query) { el.style.display = ''; return; }
-          const login = el.dataset.login || '';
-          el.style.display = login.toLowerCase().includes(query) ? '' : 'none';
-        });
       });
 
-      this.trackListener(searchInput, 'keydown', ((e: Event) => {
+      this.trackListener(bSearch, 'keydown', ((e: Event) => {
         const ke = e as KeyboardEvent;
         if (ke.key === 'Enter') {
-          const query = searchInput.value.toLowerCase().trim();
+          const query = bSearch.value.toLowerCase().trim();
           if (!query) return;
-
-          // Try matching a building first
           const match = buildings.find(b =>
             b.repoMetrics?.repo.name.toLowerCase().includes(query) ||
             b.publicName?.toLowerCase().includes(query)
@@ -1862,22 +1838,13 @@ export class CityScene extends Phaser.Scene {
             cityZoomIndex = CITY_ZOOM_LEVELS.indexOf(3);
             this.cameras.main.zoomTo(3, 500);
             this.showBuildingInfo(match);
-            return;
-          }
-
-          // Try matching a citizen
-          const citizenMatch = this.city.citizens.find(c =>
-            c.login.toLowerCase().includes(query)
-          );
-          if (citizenMatch) {
-            this.openCitizenByLogin(citizenMatch.login);
           }
         }
       }));
     }
 
-    // Click handler
-    this.trackListener(legend, 'click', (e) => {
+    // Buildings click handler
+    this.trackListener(bPanel, 'click', (e) => {
       const item = (e.target as HTMLElement).closest('.legend-settlement') as HTMLElement;
       if (!item) return;
       const bx = parseInt(item.dataset.bx!, 10);
@@ -1893,6 +1860,83 @@ export class CityScene extends Phaser.Scene {
         this.showBuildingInfo(b);
       }
     });
+
+    // ── Citizens Panel ──
+    const cPanel = document.getElementById('citizens-panel')!;
+    const allCitizens = this.city.citizens;
+    const totalCitizens = allCitizens.length;
+
+    let cHtml = '<div style="margin-bottom:8px">' +
+      '<input type="text" id="citizens-search" placeholder="Search citizens..." />' +
+      '</div>';
+    cHtml += `<h3>👥 ${totalCitizens} Citizens</h3>`;
+
+    for (let i = 0; i < allCitizens.length; i++) {
+      const c = allCitizens[i];
+      const isKing = this.city.king?.login === c.login;
+      const isUser = this.highlightUser === c.login.toLowerCase();
+      const { icon, title } = citizenTitle(i, totalCitizens, isKing, c.totalContributions);
+      const style = isUser ? 'color:#ffd700' : '';
+      cHtml += `<div class="legend-item legend-citizen" data-login="${esc(c.login)}" style="font-size:9px">` +
+        `<span class="legend-name" style="padding-left:4px;${style}">${isUser ? '★ ' : ''}${icon} ${esc(c.login)}</span>` +
+        `<span class="legend-tier">${title} · ${c.totalContributions.toLocaleString()}</span>` +
+        `</div>`;
+    }
+
+    cPanel.innerHTML = '<button class="rpgui-button city-panel-close" title="Close"><p>✕</p></button>' + cHtml;
+    cPanel.style.display = 'none';
+
+    // Wire citizens close button
+    const cClose = cPanel.querySelector('.city-panel-close');
+    if (cClose) {
+      this.trackListener(cClose as HTMLElement, 'click', (e) => {
+        e.stopPropagation();
+        cPanel.style.display = 'none';
+      });
+    }
+
+    // Wire citizen clicks → open citizen info card
+    cPanel.querySelectorAll('.legend-citizen').forEach((el) => {
+      this.trackListener(el as HTMLElement, 'click', (e) => {
+        e.stopPropagation();
+        const login = (el as HTMLElement).dataset.login;
+        if (login) this.openCitizenByLogin(login);
+      });
+    });
+
+    // Citizens search
+    const cSearch = document.getElementById('citizens-search') as HTMLInputElement;
+    if (cSearch) {
+      this.trackListener(cSearch, 'input', () => {
+        const query = cSearch.value.toLowerCase().trim();
+        const items = cPanel.querySelectorAll('.legend-citizen') as NodeListOf<HTMLElement>;
+        items.forEach(el => {
+          if (!query) { el.style.display = ''; return; }
+          const login = el.dataset.login || '';
+          el.style.display = login.toLowerCase().includes(query) ? '' : 'none';
+        });
+      });
+
+      this.trackListener(cSearch, 'keydown', ((e: Event) => {
+        const ke = e as KeyboardEvent;
+        if (ke.key === 'Enter') {
+          const query = cSearch.value.toLowerCase().trim();
+          if (!query) return;
+          const citizenMatch = this.city.citizens.find(c =>
+            c.login.toLowerCase().includes(query)
+          );
+          if (citizenMatch) {
+            this.openCitizenByLogin(citizenMatch.login);
+          }
+        }
+      }));
+    }
+
+    // Show both toggle buttons
+    const buildingsBtn = document.getElementById('buildings-toggle');
+    const citizensBtn = document.getElementById('citizens-toggle');
+    if (buildingsBtn) buildingsBtn.style.display = 'block';
+    if (citizensBtn) citizensBtn.style.display = 'block';
   }
 }
 
@@ -2018,7 +2062,7 @@ function buildSheetHTML(d: any): string {
     h += `<div class="sp-section"><div class="sp-section-title">Badges</div><div class="sp-badges">`;
     for (const b of d.badges) {
       const tip = BADGE_TIPS[b.id] || '';
-      h += `<span class="sp-badge" title="${esc(tip)}"><span class="sp-badge-icon">${esc(b.icon)}</span>${esc(b.label)}</span>`;
+      h += `<span class="sp-badge" data-tip="${esc(tip)}"><span class="sp-badge-icon">${esc(b.icon)}</span>${esc(b.label)}</span>`;
     }
     h += `</div></div>`;
   }
@@ -2052,7 +2096,7 @@ function buildSheetHTML(d: any): string {
   // Repos (max 5 inline)
   if (d.repos && d.repos.length > 0) {
     const shown = d.repos.slice(0, 5);
-    h += `<div class="sp-section"><div class="sp-section-title">Repos (${d.repos.length})</div>`;
+    h += `<div class="sp-section"><div class="sp-section-title">Inventory (${d.repos.length})</div>`;
     for (const r of shown) {
       h += `<div class="sp-repo">`;
       h += `<span class="sp-repo-icon">${repoIcon(r.stargazers)}</span>`;
@@ -2064,14 +2108,16 @@ function buildSheetHTML(d: any): string {
       h += `</span></div>`;
     }
     if (d.repos.length > 5) {
-      h += `<div style="text-align:center;margin-top:6px"><a href="/citizen/${esc(d.login)}" target="_blank" style="color:#8a7a58;font-size:10px">View all ${d.repos.length} repos →</a></div>`;
+      h += `<div style="text-align:center;margin-top:6px"><a href="/citizen/${esc(d.login)}" target="_blank" style="color:#b0a070;font-size:11px">View all ${d.repos.length} repos →</a></div>`;
     }
     h += `</div>`;
   }
 
   // Actions
+  const shareUrl = `${window.location.origin}/citizen/${encodeURIComponent(d.login)}`;
   h += `<div class="sp-actions">`;
   h += `<a href="https://github.com/${esc(d.login)}" target="_blank" class="sp-btn">GitHub</a>`;
+  h += `<button class="sp-btn sp-share-btn" data-url="${esc(shareUrl)}">📋 Share</button>`;
   h += `<a href="/citizen/${esc(d.login)}" target="_blank" class="sp-btn">Full Sheet</a>`;
   h += `</div>`;
 
