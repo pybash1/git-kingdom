@@ -82,7 +82,7 @@ export default defineConfig({
         server.middlewares.use((req, res, next) => {
           // If it's an /api/ request (not /api/save-templates which is handled above),
           // return a 404 JSON instead of letting Vite try to serve api/*.ts as modules
-          if (req.url?.startsWith('/api/') && !req.url.startsWith('/api/save-templates')) {
+          if (req.url?.startsWith('/api/') && !req.url.startsWith('/api/save-templates') && !req.url.startsWith('/api/citizen')) {
             res.statusCode = 404;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ error: 'API not available in dev mode' }));
@@ -96,6 +96,12 @@ export default defineConfig({
   server: {
     hmr: {
       overlay: false,
+    },
+    proxy: {
+      '/api/citizen': {
+        target: 'https://www.gitkingdom.com',
+        changeOrigin: true,
+      },
     },
     watch: {
       ignored: [resolve(__dirname, 'api') + '/**'],
