@@ -155,6 +155,7 @@
       font-size: 11px;
       font-family: 'Silkscreen', monospace;
       letter-spacing: 1px;
+      cursor: pointer;
       transition: background 0.2s, color 0.2s;
     }
     .sheet-link:hover {
@@ -162,8 +163,138 @@
       color: #ffd700;
     }
 
-    /* Close button for info panel */
-    #info-close {
+    /* ─── Character Sheet Panel ─── */
+    #sheet-panel {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      bottom: auto !important;
+      padding: 0 !important;
+      min-width: 340px;
+      max-width: 520px;
+      width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      display: none;
+      z-index: 300;
+    }
+    #sheet-panel .sp-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: linear-gradient(180deg, rgba(139,105,20,0.12) 0%, transparent 100%);
+      border-bottom: 1px solid #3a3020;
+      cursor: grab;
+    }
+    #sheet-panel .sp-avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      border: 2px solid #8b6914;
+      box-shadow: 0 0 12px rgba(255,215,0,0.15);
+    }
+    #sheet-panel .sp-identity { flex: 1; min-width: 0; }
+    #sheet-panel .sp-login {
+      font-family: 'Silkscreen', monospace;
+      font-size: 14px;
+      color: #ffd700;
+      letter-spacing: 1px;
+    }
+    #sheet-panel .sp-title { font-size: 11px; color: #c0a870; margin-top: 1px; }
+    #sheet-panel .sp-level {
+      font-family: 'Silkscreen', monospace;
+      font-size: 9px; color: #8a7a58;
+      margin-top: 3px; letter-spacing: 1px;
+    }
+    #sheet-panel .sp-section {
+      padding: 10px 16px;
+      border-bottom: 1px solid #2a2418;
+    }
+    #sheet-panel .sp-section:last-child { border-bottom: none; }
+    #sheet-panel .sp-section-title {
+      font-family: 'Silkscreen', monospace;
+      font-size: 9px; color: #8a7a58;
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    #sheet-panel .sp-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+    #sheet-panel .sp-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: rgba(139,105,20,0.18);
+      border: 1px solid #4a3a18;
+      border-radius: 10px;
+      padding: 2px 8px 2px 5px;
+      font-size: 11px; color: #d4c8a0;
+      cursor: help;
+    }
+    #sheet-panel .sp-badge-icon { font-size: 12px; }
+    #sheet-panel .sp-stat-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+    }
+    #sheet-panel .sp-stat-label {
+      font-family: 'Silkscreen', monospace;
+      font-size: 9px; color: #a89060; width: 80px;
+      letter-spacing: 1px; white-space: nowrap;
+    }
+    #sheet-panel .sp-stat-bar {
+      flex: 1; height: 10px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 5px; overflow: hidden;
+    }
+    #sheet-panel .sp-stat-fill {
+      height: 100%; border-radius: 5px;
+      transition: width 0.6s ease-out;
+    }
+    #sheet-panel .sp-stat-fill.power { background: linear-gradient(90deg, #c07818, #e8a020); }
+    #sheet-panel .sp-stat-fill.reach { background: linear-gradient(90deg, #b8860b, #ffd700); }
+    #sheet-panel .sp-stat-fill.versatility { background: linear-gradient(90deg, #2e8b57, #3cb371); }
+    #sheet-panel .sp-stat-val {
+      font-family: 'Silkscreen', monospace;
+      font-size: 9px; color: #c0b088; width: 22px; text-align: right;
+    }
+    #sheet-panel .sp-kingdoms { display: flex; flex-wrap: wrap; gap: 5px; }
+    #sheet-panel .sp-kingdom {
+      font-family: 'Silkscreen', monospace;
+      font-size: 9px; color: #c0a870;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid #3a3020;
+      border-radius: 3px; padding: 2px 7px;
+      letter-spacing: 1px;
+    }
+    #sheet-panel .sp-repo {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+      font-size: 11px;
+    }
+    #sheet-panel .sp-repo:last-child { border-bottom: none; }
+    #sheet-panel .sp-repo-icon { font-size: 13px; width: 18px; text-align: center; }
+    #sheet-panel .sp-repo-name {
+      flex: 1; min-width: 0; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+    #sheet-panel .sp-repo-name a { color: #c0a870; text-decoration: none; }
+    #sheet-panel .sp-repo-name a:hover { color: #ffd700; }
+    #sheet-panel .sp-repo-meta {
+      font-size: 9px; color: #6a5a40; white-space: nowrap;
+      display: flex; gap: 6px;
+    }
+    #sheet-panel .sp-repo-stars { color: #ffd700; }
+    #sheet-panel .sp-actions {
+      display: flex; gap: 8px; padding: 10px 16px; justify-content: center;
+    }
+    #sheet-panel .sp-btn {
+      font-family: 'Silkscreen', monospace;
+      font-size: 9px; letter-spacing: 1px; text-decoration: none;
+      padding: 6px 12px; border-radius: 4px;
+      border: 1px solid #5a4a20; color: #c0a870;
+      background: rgba(255,255,255,0.04); cursor: pointer;
+      transition: all 0.2s;
+    }
+    #sheet-panel .sp-btn:hover { background: rgba(139,105,20,0.2); color: #ffd700; border-color: #8b6914; }
+
+    /* Close buttons for panels */
+    #info-close, #sheet-close {
       position: absolute;
       top: 4px;
       right: 4px;
@@ -173,7 +304,7 @@
       height: 30px !important;
       padding: 0 !important;
     }
-    #info-close p { font-size: 10px !important; margin: 0; line-height: 1; }
+    #info-close p, #sheet-close p { font-size: 10px !important; margin: 0; line-height: 1; }
 
     /* ─── Loading ─── */
     #loading {
@@ -837,6 +968,12 @@
       </div>
     </div>
 
+    <!-- Character sheet panel -->
+    <div id="sheet-panel" class="rpgui-container framed-golden">
+      <button id="sheet-close" class="rpgui-button" title="Close"><p>✕</p></button>
+      <div id="sheet-content"></div>
+    </div>
+
   </div><!-- end rpgui-overlay -->
 
   <!-- Background music (playlist) -->
@@ -935,6 +1072,12 @@
     document.getElementById('profile-close').addEventListener('click', function(e) {
       e.stopPropagation();
       document.getElementById('profile-panel').style.display = 'none';
+    });
+
+    // Sheet panel close button
+    document.getElementById('sheet-close').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('sheet-panel').style.display = 'none';
     });
 
     // Sign out button
@@ -1158,6 +1301,7 @@
       makeDraggable(document.getElementById('info-panel'));
       makeDraggable(document.getElementById('legend'));
       makeDraggable(document.getElementById('profile-panel'));
+      makeDraggable(document.getElementById('sheet-panel'));
     })();
   </script>
 

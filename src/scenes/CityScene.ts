@@ -1400,8 +1400,15 @@ export class CityScene extends Phaser.Scene {
     ];
 
     document.getElementById('info-stats')!.innerHTML = stats.join('');
-    document.getElementById('info-king')!.innerHTML =
-      `<a href="/citizen/${encodeURIComponent(citizen.login)}" class="sheet-link">📜 View Character Sheet</a>`;
+    const kingEl = document.getElementById('info-king')!;
+    kingEl.innerHTML =
+      `<button class="sheet-link" data-login="${esc(citizen.login)}">📜 View Sheet</button>`;
+    const sheetBtn = kingEl.querySelector('.sheet-link') as HTMLElement;
+    if (sheetBtn) {
+      this.trackListener(sheetBtn, 'click', () => {
+        this.showCharacterSheet(citizen.login);
+      });
+    }
     if ((window as any).__resetPanelPos) (window as any).__resetPanelPos(panel);
     panel.style.display = 'block';
   }
@@ -1542,8 +1549,15 @@ export class CityScene extends Phaser.Scene {
     ];
 
     document.getElementById('info-stats')!.innerHTML = stats.join('');
-    document.getElementById('info-king')!.innerHTML =
-      `<a href="/citizen/${encodeURIComponent(citizen.login)}" class="sheet-link">📜 View Character Sheet</a>`;
+    const kingEl2 = document.getElementById('info-king')!;
+    kingEl2.innerHTML =
+      `<button class="sheet-link" data-login="${esc(citizen.login)}">📜 View Sheet</button>`;
+    const sheetBtn2 = kingEl2.querySelector('.sheet-link') as HTMLElement;
+    if (sheetBtn2) {
+      this.trackListener(sheetBtn2, 'click', () => {
+        this.showCharacterSheet(citizen.login);
+      });
+    }
     if ((window as any).__resetPanelPos) (window as any).__resetPanelPos(panel);
     panel.style.display = 'block';
   }
@@ -1552,6 +1566,29 @@ export class CityScene extends Phaser.Scene {
     document.getElementById('info-panel')!.style.display = 'none';
     const avatarEl = document.getElementById('info-avatar') as HTMLImageElement;
     if (avatarEl) { avatarEl.style.display = 'none'; avatarEl.src = ''; }
+  }
+
+  private async showCharacterSheet(login: string) {
+    const panel = document.getElementById('sheet-panel')!;
+    const content = document.getElementById('sheet-content')!;
+
+    // Hide other panels
+    document.getElementById('info-panel')!.style.display = 'none';
+    document.getElementById('profile-panel')!.style.display = 'none';
+
+    // Show loading
+    content.innerHTML = '<div style="text-align:center;padding:32px;color:#8a7a58;font-size:12px">Loading character sheet…</div>';
+    if ((window as any).__resetPanelPos) (window as any).__resetPanelPos(panel);
+    panel.style.display = 'block';
+
+    try {
+      const res = await fetch(`/api/citizen?username=${encodeURIComponent(login)}`);
+      if (!res.ok) throw new Error('failed');
+      const d = await res.json();
+      content.innerHTML = buildSheetHTML(d);
+    } catch {
+      content.innerHTML = '<div style="text-align:center;padding:32px;color:#8a7a58;font-size:12px">Failed to load character sheet.</div>';
+    }
   }
 
   private addBackButton() {
@@ -1934,4 +1971,109 @@ function statBar(label: string, value: number, max: number, color: string): stri
     `<div class="stat-bar-track"><div class="stat-bar-fill bar-${color}" style="width:${pct}%"></div></div>` +
     `<span class="stat-bar-value">${fmt}</span>` +
     `</div>`;
+}
+
+// ─── Badge tooltip descriptions ──────────────────────────────────
+const BADGE_TIPS: Record<string, string> = {
+  titan: '1,000+ total contributions',
+  centurion: '100+ total contributions',
+  crown: 'Top contributor to at least one repo',
+  founder: 'Owns a repo in the kingdom',
+  on_fire: 'Contributed to a repo pushed in the last 3 days',
+  polyglot: 'Contributes across 3+ languages',
+  star_bearer: '1,000+ total stars across repos',
+  team_player: 'Contributes to 5+ repos',
+  lone_wolf: 'Contributes to exactly 1 repo',
+};
+
+function repoIcon(stars: number): string {
+  if (stars >= 10000) return '🗡';
+  if (stars >= 1000) return '🛡';
+  if (stars >= 100) return '⚔';
+  if (stars >= 10) return '📜';
+  return '⚗';
+}
+
+function fmtNum(n: number): string {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return String(n);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildSheetHTML(d: any): string {
+  let h = '';
+
+  // Header
+  h += `<div class="sp-header">`;
+  h += `<img class="sp-avatar" src="https://github.com/${esc(d.login)}.png?size=128" alt="" onerror="this.style.display='none'" />`;
+  h += `<div class="sp-identity">`;
+  h += `<div class="sp-login">${esc(d.title.icon)} ${esc(d.login)}</div>`;
+  h += `<div class="sp-title">${esc(d.title.name)} of ${esc(d.title.kingdom)}</div>`;
+  h += `<div class="sp-level">Level ${d.level} · ${fmtNum(d.xp)} XP · ${d.totalContributions.toLocaleString()} contributions</div>`;
+  h += `</div></div>`;
+
+  // Badges
+  if (d.badges && d.badges.length > 0) {
+    h += `<div class="sp-section"><div class="sp-section-title">Badges</div><div class="sp-badges">`;
+    for (const b of d.badges) {
+      const tip = BADGE_TIPS[b.id] || '';
+      h += `<span class="sp-badge" title="${esc(tip)}"><span class="sp-badge-icon">${esc(b.icon)}</span>${esc(b.label)}</span>`;
+    }
+    h += `</div></div>`;
+  }
+
+  // Stats
+  h += `<div class="sp-section"><div class="sp-section-title">Stats</div>`;
+  const stats = [
+    { key: 'power', label: '⚔ Power', val: d.stats.power },
+    { key: 'reach', label: '⭐ Reach', val: d.stats.reach },
+    { key: 'versatility', label: '🌐 Versatility', val: d.stats.versatility },
+  ];
+  for (const s of stats) {
+    const pct = Math.round((s.val / 20) * 100);
+    h += `<div class="sp-stat-row">`;
+    h += `<span class="sp-stat-label">${s.label}</span>`;
+    h += `<div class="sp-stat-bar"><div class="sp-stat-fill ${s.key}" style="width:${pct}%"></div></div>`;
+    h += `<span class="sp-stat-val">${s.val}</span>`;
+    h += `</div>`;
+  }
+  h += `</div>`;
+
+  // Kingdoms
+  if (d.languages && d.languages.length > 0) {
+    h += `<div class="sp-section"><div class="sp-section-title">Kingdoms</div><div class="sp-kingdoms">`;
+    for (const lang of d.languages) {
+      h += `<span class="sp-kingdom">${esc(lang)}</span>`;
+    }
+    h += `</div></div>`;
+  }
+
+  // Repos (max 5 inline)
+  if (d.repos && d.repos.length > 0) {
+    const shown = d.repos.slice(0, 5);
+    h += `<div class="sp-section"><div class="sp-section-title">Repos (${d.repos.length})</div>`;
+    for (const r of shown) {
+      h += `<div class="sp-repo">`;
+      h += `<span class="sp-repo-icon">${repoIcon(r.stargazers)}</span>`;
+      h += `<span class="sp-repo-name"><a href="https://github.com/${esc(r.full_name)}" target="_blank">${esc(r.full_name)}</a></span>`;
+      h += `<span class="sp-repo-meta">`;
+      if (r.is_king) h += `<span style="color:#ffd700">👑</span>`;
+      h += `<span class="sp-repo-stars">★${fmtNum(r.stargazers)}</span>`;
+      if (r.language) h += `<span>${esc(r.language)}</span>`;
+      h += `</span></div>`;
+    }
+    if (d.repos.length > 5) {
+      h += `<div style="text-align:center;margin-top:6px"><a href="/citizen/${esc(d.login)}" target="_blank" style="color:#8a7a58;font-size:10px">View all ${d.repos.length} repos →</a></div>`;
+    }
+    h += `</div>`;
+  }
+
+  // Actions
+  h += `<div class="sp-actions">`;
+  h += `<a href="https://github.com/${esc(d.login)}" target="_blank" class="sp-btn">GitHub</a>`;
+  h += `<a href="/citizen/${esc(d.login)}" target="_blank" class="sp-btn">Full Sheet</a>`;
+  h += `</div>`;
+
+  return h;
 }
