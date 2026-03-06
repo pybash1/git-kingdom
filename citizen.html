@@ -502,7 +502,7 @@
           mainEntity: {
             '@type': 'Person',
             name: d.login,
-            image: avatar,
+            image: d.avatar_url || ('https://github.com/' + d.login + '.png?size=400'),
             url: 'https://github.com/' + d.login,
           },
         });
