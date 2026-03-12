@@ -44,14 +44,52 @@ export async function signOut() {
   window.location.href = '/api/auth/logout';
 }
 
+// ─── localStorage cache for instant return-visit loading ──────
+const WORLD_CACHE_KEY = 'gk_world_v1';
+const WORLD_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+function loadCachedWorld(): WorldData | null {
+  try {
+    const raw = localStorage.getItem(WORLD_CACHE_KEY);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > WORLD_CACHE_TTL) {
+      localStorage.removeItem(WORLD_CACHE_KEY);
+      return null;
+    }
+    return data as WorldData;
+  } catch {
+    return null;
+  }
+}
+
+function saveCachedWorld(data: WorldData) {
+  try {
+    localStorage.setItem(WORLD_CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
+  } catch {
+    // localStorage full or unavailable — silently skip
+  }
+}
+
 /**
  * Fetch the universal world data.
- * Strategy: load pre-baked JSON first, then fetch only new repos from Supabase.
- * This avoids loading the full repo list from Supabase on every page load.
+ * Strategy:
+ * 1. Return localStorage cache immediately if fresh (< 1 hour)
+ * 2. Load pre-baked JSON + delta from Supabase
+ * 3. Save result to localStorage for next visit
  */
 let worldCache: WorldData | null | undefined;
 export async function fetchUniversalWorld(): Promise<WorldData | null> {
   if (worldCache !== undefined) return worldCache;
+
+  // Fast path: return localStorage cache if fresh
+  const cached = loadCachedWorld();
+  if (cached) {
+    console.log(`[world] Using cached data (${cached.repos.length} repos)`);
+    worldCache = cached;
+    return cached;
+  }
+
   try {
     // 1. Load pre-baked JSON (fast, static, cached by browser)
     const jsonRes = await fetch('/data/default-world.json');
@@ -89,6 +127,7 @@ export async function fetchUniversalWorld(): Promise<WorldData | null> {
     }
 
     worldCache = base;
+    saveCachedWorld(base);
     return base;
   } catch {
     // JSON fetch failed — try full Supabase fetch
@@ -102,6 +141,7 @@ async function fetchFullWorld(): Promise<WorldData | null> {
     const res = await fetch('/api/world');
     if (!res.ok) { worldCache = null; return null; }
     worldCache = (await res.json()) as WorldData;
+    if (worldCache) saveCachedWorld(worldCache);
     return worldCache ?? null;
   } catch {
     worldCache = null;
@@ -110,7 +150,10 @@ async function fetchFullWorld(): Promise<WorldData | null> {
 }
 
 /** Clear the memoized world cache (call after join to get fresh data) */
-export function invalidateWorldCache() { worldCache = undefined; }
+export function invalidateWorldCache() {
+  worldCache = undefined;
+  try { localStorage.removeItem(WORLD_CACHE_KEY); } catch { /* noop */ }
+}
 
 /**
  * Tell the server to add the signed-in user's repos to the universal world.
@@ -150,4 +193,14 @@ export async function fetchMyRepos(): Promise<UserRepo[] | null> {
   } catch {
     return null;
   }
+}
+
+/** Add a repo to the world (no auth required) */
+export async function addRepo(input: string): Promise<{ ok: boolean; repo?: string; language?: string; stars?: number; already?: boolean; error?: string }> {
+  const res = await fetch('/api/repo/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repo: input }),
+  });
+  return res.json();
 }

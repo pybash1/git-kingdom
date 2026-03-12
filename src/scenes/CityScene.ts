@@ -520,16 +520,21 @@ export class CityScene extends Phaser.Scene {
           return;
         }
 
-        // Find closest building
+        // Find building whose footprint contains the click (or closest within 2 tiles)
         let closestBuilding: CityBuilding | null = null;
         let closestDist = Infinity;
         for (const b of buildings) {
-          const bcx = b.x + b.width / 2;
-          const bcy = b.y + b.height / 2;
-          const d = Math.abs(bcx - tx) + Math.abs(bcy - ty);
-          if (d < closestDist && d <= 4) {
-            closestDist = d;
-            closestBuilding = b;
+          const inside = tx >= b.x && tx < b.x + b.width && ty >= b.y && ty < b.y + b.height;
+          if (inside) {
+            // Click is inside the footprint — pick the smallest building if overlapping
+            const area = b.width * b.height;
+            if (area < closestDist) { closestDist = area; closestBuilding = b; }
+          } else if (!closestBuilding) {
+            // Fallback: within 2 tiles of the edge
+            const dx = Math.max(b.x - tx, 0, tx - (b.x + b.width - 1));
+            const dy = Math.max(b.y - ty, 0, ty - (b.y + b.height - 1));
+            const d = dx + dy;
+            if (d <= 2 && d < closestDist) { closestDist = d; closestBuilding = b; }
           }
         }
 
@@ -1506,6 +1511,20 @@ export class CityScene extends Phaser.Scene {
         if (login) this.openCitizenByLogin(login);
       });
     });
+
+    // Remove any previous claim element
+    const prevClaim = panel.querySelector('.claim-cta');
+    if (prevClaim) prevClaim.remove();
+
+    // Show "Claim this repo" if user is not signed in
+    if (!(window as any).__gkUser && !isUserRepo) {
+      const claimEl = document.createElement('div');
+      claimEl.className = 'claim-cta';
+      claimEl.style.cssText = 'margin-top:6px;font-size:8px;text-align:center';
+      claimEl.innerHTML = '<a href="/api/auth/login" class="gh-link" style="color:#ffd700">⚔ Claim this repo</a>'
+        + '<div style="color:#8a8070;margin-top:2px">Sign in with GitHub to claim repos you own</div>';
+      kingEl.after(claimEl);
+    }
 
     if ((window as any).__resetPanelPos) (window as any).__resetPanelPos(panel);
     panel.style.display = 'block';

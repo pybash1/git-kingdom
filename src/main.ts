@@ -18,6 +18,7 @@ function getBiome(lang: string): Biome {
     Rust: 'volcanic', Go: 'mountain', Ruby: 'crystal', Java: 'desert',
     'C++': 'mountain', C: 'mountain', 'C#': 'tundra', PHP: 'forest',
     Swift: 'grassland', Kotlin: 'desert', Shell: 'desert',
+    Uncharted: 'mist',
   };
   return m[lang] || 'grassland';
 }
@@ -56,8 +57,7 @@ function groupByLanguage(allMetrics: KingdomMetrics[]): LanguageKingdom[] {
 
   let filtered = 0;
   for (const m of allMetrics) {
-    const lang = m.repo.language;
-    if (!lang) continue;
+    const lang = m.repo.language || 'Uncharted';
     if (isContentRepo(m)) {
       filtered++;
       continue;
@@ -281,6 +281,9 @@ async function boot() {
       }
     }).catch(err => console.warn('[OAuth] User fetch failed:', err?.message || err));
 
+    // Expose for inline scripts (Add Repo modal)
+    (window as any).__invalidateWorldCache = invalidateWorldCache;
+
     return bootDirect(params, loadingEl, route.repoName);
   }
 
@@ -289,6 +292,9 @@ async function boot() {
   }
 
   // ── Default path: show animated TitleScene city behind the title overlay ──
+  // Start prefetching world data immediately (runs in background while title screen shows)
+  const worldDataPromise = loadWorldData(loadingEl);
+
   loadingEl.textContent = 'Loading sprites...';
   const spritePacks = await loadSpritePacks();
 
@@ -306,11 +312,11 @@ async function boot() {
   trackGameStart();
   trackPageView('/', 'Git Kingdom | World Map');
 
-  // User clicked — stop TitleScene, load real data, start WorldScene
+  // User clicked — data was prefetched while they were on the title screen
   loadingEl.style.display = 'block';
   loadingEl.textContent = 'Loading kingdom data...';
 
-  const allMetrics = await loadWorldData(loadingEl);
+  const allMetrics = await worldDataPromise;
 
   if (allMetrics.length === 0) {
     loadingEl.textContent = 'No world data available. Try refreshing.';
@@ -362,8 +368,12 @@ async function bootDirect(
   // Determine the username from URL route (e.g. /facebook or /facebook/react)
   const highlightUser = params.get('user') || params.get('org') || null;
 
-  // Load world data from Supabase or pre-baked JSON (no GitHub API calls)
-  const allMetrics = await loadWorldData(loadingEl);
+  // Load world data + sprites in parallel (both are independent)
+  loadingEl.textContent = 'Loading world...';
+  const [allMetrics, spritePacks] = await Promise.all([
+    loadWorldData(loadingEl),
+    loadSpritePacks(),
+  ]);
 
   if (allMetrics.length === 0) {
     loadingEl.textContent = 'No world data available. Try refreshing.';
@@ -388,7 +398,6 @@ async function bootDirect(
   ));
 
   loadingEl.textContent = `Building ${languageKingdoms.length} kingdoms...`;
-  const spritePacks = await loadSpritePacks();
   await new Promise(r => setTimeout(r, 50));
 
   const game = createPhaserGame();

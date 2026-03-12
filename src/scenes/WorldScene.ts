@@ -945,6 +945,7 @@ export class WorldScene extends Phaser.Scene {
         : k.totalStars + '★';
 
       const tierIcon =
+        k.language === 'Uncharted' ? '🏝️' :
         k.settlements[0]?.tier === 'capital' ? '👑' :
         k.settlements[0]?.tier === 'city' ? '🏰' :
         k.settlements[0]?.tier === 'town' ? '🏛' : '🏠';

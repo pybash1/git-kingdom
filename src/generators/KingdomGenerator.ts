@@ -24,6 +24,7 @@ function getBiome(language: string | null): Biome {
     PHP: 'forest',
     Swift: 'grassland',
     Kotlin: 'desert',
+    Uncharted: 'mist',
   };
   return biomes[language || ''] || 'grassland';
 }

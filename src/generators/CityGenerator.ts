@@ -103,6 +103,7 @@ function biomeBaseTile(biome: Biome): number {
     case 'crystal': return TILES.GRASS_DARK;
     case 'desert': return TILES.SAND;
     case 'tundra': return TILES.SNOW;
+    case 'mist': return TILES.GRASS_DARK;
     default: return TILES.GRASS;
   }
 }

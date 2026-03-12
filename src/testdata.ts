@@ -41,7 +41,7 @@ export function generateTestRepos(count: number): KingdomMetrics[] {
         stargazers_count: actualStars,
         forks_count: Math.floor(actualStars * 0.1),
         open_issues_count: Math.floor(actualStars * 0.02),
-        language: 'TypeScript',
+        language: i % 8 === 7 ? null : 'TypeScript',  // every 8th repo has no language → Uncharted Isle
         description: `A legendary ${name} project`,
         topics: [],
         created_at: '2020-01-01T00:00:00Z',

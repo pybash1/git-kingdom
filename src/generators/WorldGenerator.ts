@@ -203,6 +203,69 @@ function generateElevation(land: boolean[][], W: number, H: number): number[][] 
 }
 
 // ═══════════════════════════════════════════════════════════════
+// STEP 2.5: Stamp a separate island for the "Uncharted" kingdom
+// ═══════════════════════════════════════════════════════════════
+function stampUnchartedIsland(
+  land: boolean[][], W: number, H: number,
+  kingdom: WorldKingdom,
+): void {
+  const noise = createNoise(9999);
+  const margin = 8;
+
+  // Find the ocean spot farthest from any land — that's where our island goes
+  let bestX = margin, bestY = margin, bestMinDist = 0;
+
+  for (let y = margin; y < H - margin; y += 3) {
+    for (let x = margin; x < W - margin; x += 3) {
+      if (land[y][x]) continue;
+
+      // Measure distance to nearest land tile (scan outward)
+      let minDist = 30; // cap at 30 — beyond that is all equally good
+      outer: for (let r = 1; r <= 30; r++) {
+        for (let dy = -r; dy <= r; dy++) {
+          for (let dx = -r; dx <= r; dx++) {
+            if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue;
+            const nx = x + dx, ny = y + dy;
+            if (nx >= 0 && nx < W && ny >= 0 && ny < H && land[ny][nx]) {
+              minDist = r;
+              break outer;
+            }
+          }
+        }
+      }
+
+      // Prefer bottom half of map so the island isn't hidden behind the game header
+      const topPenalty = y < H * 0.35 ? 0.5 : 1.0;
+      const score = minDist * topPenalty;
+      if (score > bestMinDist) {
+        bestMinDist = score;
+        bestX = x;
+        bestY = y;
+      }
+    }
+  }
+
+  // Stamp an irregular island shape using noise for natural coastline
+  const targetRadius = Math.max(10, Math.ceil(Math.sqrt(kingdom.targetArea / Math.PI)));
+  for (let dy = -targetRadius; dy <= targetRadius; dy++) {
+    for (let dx = -targetRadius; dx <= targetRadius; dx++) {
+      const nx = bestX + dx, ny = bestY + dy;
+      if (nx < 2 || nx >= W - 2 || ny < 2 || ny >= H - 2) continue;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const n = noise(nx * 0.1, ny * 0.1, 3);
+      const adjustedR = targetRadius * (0.6 + n * 0.5); // irregular coastline
+      if (dist <= adjustedR) {
+        land[ny][nx] = true;
+      }
+    }
+  }
+
+  // Pre-set the kingdom center to the island center
+  kingdom.centerX = bestX;
+  kingdom.centerY = bestY;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // STEP 3: Place kingdom seeds on land, then flood-fill grow
 // ═══════════════════════════════════════════════════════════════
 function placeAndGrowKingdoms(
@@ -221,35 +284,44 @@ function placeAndGrowKingdoms(
 
   if (landTiles.length === 0) return ownership;
 
-  // Place kingdom seeds via farthest-point sampling
-  const cx = W / 2, cy = H / 2;
-  let bestIdx = 0, bestDist = Infinity;
-  for (let i = 0; i < landTiles.length; i++) {
-    const [lx, ly] = landTiles[i];
-    const d = Math.abs(lx - cx) + Math.abs(ly - cy);
-    if (d < bestDist) { bestDist = d; bestIdx = i; }
-  }
-  kingdoms[0].centerX = landTiles[bestIdx][0];
-  kingdoms[0].centerY = landTiles[bestIdx][1];
+  // Separate pre-placed island kingdoms (Uncharted) from continent kingdoms
+  const isPrePlaced = (k: WorldKingdom) => k.language === 'Uncharted';
+  const toPlace = kingdoms.filter(k => !isPrePlaced(k));
+  const prePlaced = kingdoms.filter(k => isPrePlaced(k));
 
-  for (let ki = 1; ki < kingdoms.length; ki++) {
-    let farthestIdx = 0, farthestMin = 0;
+  // Place continent kingdom seeds via farthest-point sampling
+  if (toPlace.length > 0) {
+    const cx = W / 2, cy = H / 2;
+    let bestIdx = 0, bestDist = Infinity;
     for (let i = 0; i < landTiles.length; i++) {
       const [lx, ly] = landTiles[i];
-      let minDist = Infinity;
-      for (let j = 0; j < ki; j++) {
-        const dx = lx - kingdoms[j].centerX;
-        const dy = ly - kingdoms[j].centerY;
-        minDist = Math.min(minDist, dx * dx + dy * dy);
-      }
-      const jitter = rand() * 200;
-      if (minDist + jitter > farthestMin) {
-        farthestMin = minDist + jitter;
-        farthestIdx = i;
-      }
+      const d = Math.abs(lx - cx) + Math.abs(ly - cy);
+      if (d < bestDist) { bestDist = d; bestIdx = i; }
     }
-    kingdoms[ki].centerX = landTiles[farthestIdx][0];
-    kingdoms[ki].centerY = landTiles[farthestIdx][1];
+    toPlace[0].centerX = landTiles[bestIdx][0];
+    toPlace[0].centerY = landTiles[bestIdx][1];
+
+    for (let ki = 1; ki < toPlace.length; ki++) {
+      let farthestIdx = 0, farthestMin = 0;
+      // Consider both already-placed continent kingdoms AND pre-placed island kingdoms
+      const allPlaced = [...toPlace.slice(0, ki), ...prePlaced];
+      for (let i = 0; i < landTiles.length; i++) {
+        const [lx, ly] = landTiles[i];
+        let minDist = Infinity;
+        for (const pk of allPlaced) {
+          const dx = lx - pk.centerX;
+          const dy = ly - pk.centerY;
+          minDist = Math.min(minDist, dx * dx + dy * dy);
+        }
+        const jitter = rand() * 200;
+        if (minDist + jitter > farthestMin) {
+          farthestMin = minDist + jitter;
+          farthestIdx = i;
+        }
+      }
+      toPlace[ki].centerX = landTiles[farthestIdx][0];
+      toPlace[ki].centerY = landTiles[farthestIdx][1];
+    }
   }
 
   // Seed ownership
@@ -394,6 +466,9 @@ function biomeTerrainTile(biome: Biome, e: number, m: number): number {
     case 'tundra':
       if (e > 0.72) return TILES.MOUNTAIN;
       return m > 0.5 ? TILES.SNOW : TILES.GRASS_DARK;
+    case 'mist':
+      // Foggy, dark terrain — mostly dark grass with patches of forest
+      return m > 0.6 ? TILES.FOREST : TILES.GRASS_DARK;
     default:
       return TILES.GRASS;
   }
@@ -702,6 +777,8 @@ export function generateWorld(languageKingdoms: LanguageKingdom[]): WorldData {
     // Territory scales with total repo count (each repo "contributes" space)
     const repoArea = lk.repos.length * 80;
     const tierArea = settlementArea[cityTier];
+    // Ensure every kingdom is at least a visible island (3000 tiles min)
+    const MIN_KINGDOM_AREA = 3000;
 
     return {
       index: i,
@@ -715,7 +792,7 @@ export function generateWorld(languageKingdoms: LanguageKingdom[]): WorldData {
       centerY: 0,
       centroidX: 0,
       centroidY: 0,
-      targetArea: Math.max(300, (repoArea + tierArea) * KINGDOM_AREA_MULTIPLIER),
+      targetArea: Math.max(MIN_KINGDOM_AREA, (repoArea + tierArea) * KINGDOM_AREA_MULTIPLIER),
     };
   });
 
@@ -736,6 +813,13 @@ export function generateWorld(languageKingdoms: LanguageKingdom[]): WorldData {
 
   // Pipeline
   const land = generateLandmass(W, H, numContinents);
+
+  // Stamp a separate island for the Uncharted kingdom (null-language repos)
+  const unchartedK = kingdoms.find(k => k.language === 'Uncharted');
+  if (unchartedK) {
+    stampUnchartedIsland(land, W, H, unchartedK);
+  }
+
   const elev = generateElevation(land, W, H);
   const ownership = placeAndGrowKingdoms(kingdoms, land, elev, W, H);
   computeCentroids(kingdoms, ownership, W, H);

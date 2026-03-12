@@ -32,7 +32,7 @@ export interface KingdomMetrics {
 // Settlement tier — individual repo size within a kingdom
 export type SettlementTier = 'camp' | 'hamlet' | 'village' | 'town' | 'city' | 'capital';
 
-export type Biome = 'grassland' | 'forest' | 'mountain' | 'volcanic' | 'crystal' | 'desert' | 'tundra';
+export type Biome = 'grassland' | 'forest' | 'mountain' | 'volcanic' | 'crystal' | 'desert' | 'tundra' | 'mist';
 
 // ─── City-Builder Model Types ────────────────────────────────
 

@@ -67,6 +67,9 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://avatars.githubusercontent.com" crossorigin>
+  <link rel="preload" href="/data/default-world.json" as="fetch" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
   <!-- RPGUI Framework — cohesive retro RPG UI -->
   <link rel="stylesheet" href="/vendor/rpgui/rpgui.min.css">
@@ -619,6 +622,37 @@
     }
     #settings-btn p { font-size: 12px !important; margin: 0; line-height: 1; }
 
+    /* ─── Add Repo modal ─── */
+    #add-repo-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #add-repo-modal .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+    }
+    #add-repo-modal .modal-content {
+      position: relative;
+      width: 320px;
+      max-width: 90vw;
+      padding: 16px !important;
+    }
+    #add-repo-close {
+      position: absolute !important;
+      top: 2px;
+      right: 2px;
+      min-width: auto !important;
+      width: auto !important;
+      height: auto !important;
+      padding: 2px 6px !important;
+    }
+    #add-repo-close p { font-size: 10px !important; margin: 0; }
+
     /* ─── Music toggle button (top-right, below header) ─── */
     #music-btn {
       position: fixed !important;
@@ -994,6 +1028,7 @@
         </div>
       </div>
       <div class="header-right">
+        <a href="#" class="hdr-auth-link" id="hdr-add-repo">＋ Add Repo</a>
         <span id="hdr-auth">
           <a href="/api/auth/login" class="hdr-auth-link" id="hdr-signin"><span class="auth-long">Claim your repos</span><span class="auth-short">Claim</span></a>
         </span>
@@ -1001,6 +1036,19 @@
     </div>
 
     <div id="controls-hint"></div>
+
+    <!-- Add Repo modal -->
+    <div id="add-repo-modal" style="display:none">
+      <div class="modal-backdrop"></div>
+      <div class="rpgui-container framed-golden modal-content">
+        <button id="add-repo-close" class="rpgui-button" title="Close"><p>✕</p></button>
+        <h2 style="font-size:11px;color:#ffd700;margin:0 0 8px">Add a Repo to the World</h2>
+        <p style="font-size:8px;color:#c8b89a;margin:0 0 10px">Paste a GitHub URL or owner/repo</p>
+        <input id="add-repo-input" type="text" placeholder="https://github.com/owner/repo" style="width:100%;box-sizing:border-box;padding:6px 8px;font-family:'Silkscreen',monospace;font-size:10px;background:#1a1610;color:#e8d8b0;border:2px solid #5a4a2a;border-radius:2px;outline:none" />
+        <button id="add-repo-submit" class="rpgui-button golden" style="width:100%;margin-top:8px"><p>⚔ Add to Kingdom</p></button>
+        <div id="add-repo-status" style="font-size:8px;margin-top:8px;text-align:center;min-height:14px"></div>
+      </div>
+    </div>
 
     <!-- Music toggle -->
     <button id="music-btn" class="rpgui-button" title="Toggle music"><p>🔇</p></button>
@@ -1411,6 +1459,44 @@
       makeDraggable(document.getElementById('citizens-panel'));
       makeDraggable(document.getElementById('profile-panel'));
       makeDraggable(document.getElementById('sheet-panel'));
+    })();
+
+    // ── Add Repo modal wiring ──
+    (function setupAddRepo() {
+      var headerBtn = document.getElementById('hdr-add-repo');
+      var modal = document.getElementById('add-repo-modal');
+      var closeBtn = document.getElementById('add-repo-close');
+      var submitBtn = document.getElementById('add-repo-submit');
+      var input = document.getElementById('add-repo-input');
+      var status = document.getElementById('add-repo-status');
+      if (!modal || !headerBtn) return;
+
+      function openModal() { modal.style.display = 'flex'; input.value = ''; status.textContent = ''; input.focus(); }
+      function closeModal() { modal.style.display = 'none'; }
+
+      headerBtn.addEventListener('click', function(e) { e.preventDefault(); openModal(); });
+      closeBtn.addEventListener('click', closeModal);
+      modal.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+
+      submitBtn.addEventListener('click', function() {
+        var val = input.value.trim();
+        if (!val) { status.textContent = 'Enter a repo URL or owner/repo'; status.style.color = '#e07040'; return; }
+        status.textContent = 'Fetching...'; status.style.color = '#c8b89a';
+        submitBtn.disabled = true;
+        fetch('/api/repo/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ repo: val }) })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            submitBtn.disabled = false;
+            if (d.ok) {
+              var msg = d.already ? '⚔ Already in the kingdom!' : '⚔ ' + d.repo + ' added! (' + (d.language || 'Uncharted') + ', ★' + d.stars + ')';
+              status.textContent = msg; status.style.color = '#90d070';
+              if (!d.already && window.__invalidateWorldCache) window.__invalidateWorldCache();
+            } else {
+              status.textContent = d.error || 'Failed to add repo'; status.style.color = '#e07040';
+            }
+          })
+          .catch(function() { submitBtn.disabled = false; status.textContent = 'Network error'; status.style.color = '#e07040'; });
+      });
     })();
   </script>
 
