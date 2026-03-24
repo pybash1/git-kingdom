@@ -540,15 +540,14 @@ export class CityScene extends Phaser.Scene {
         }
       });
       let spriteClicked = false;
-      // Helper: check if pointer is over a DOM UI panel (not the game canvas)
+      // Helper: check if pointer is over a visible DOM overlay panel
       const isOverPanel = (pointer: Phaser.Input.Pointer): boolean => {
         const el = document.elementFromPoint(pointer.x, pointer.y);
         if (!el) return false;
-        // Check if click target is inside any UI panel or the game header
-        return !!(el.closest('#info-panel') || el.closest('#sheet-panel') ||
-          el.closest('#profile-panel') || el.closest('#buildings-panel') ||
-          el.closest('#citizens-panel') || el.closest('#game-header') ||
-          el.closest('.floating-bar'));
+        const panel = el.closest('#info-panel') || el.closest('#sheet-panel') ||
+          el.closest('#profile-panel');
+        // Only block if the panel is actually visible
+        return !!(panel && (panel as HTMLElement).style.display !== 'none');
       };
       this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
         if (isDragging) { isDragging = false; return; }
