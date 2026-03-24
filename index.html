@@ -1043,7 +1043,7 @@
           <p class="entry-tagline">Visualize GitHub as a pixel-art fantasy kingdom</p>
           <button id="btn-enter" class="rpgui-button golden"><p>Enter the Kingdom</p></button>
           <p id="entry-citizens" class="entry-citizens"></p>
-          <p class="entry-credit">Created by <a href="https://www.robertcreative.com/" target="_blank" rel="noopener">Rob Gourley</a></p>
+          <p class="entry-credit">Created by <a href="https://www.robertcreative.com/" target="_blank" rel="noopener">Rob Gourley</a> · <a href="https://github.com/rgourley/git-kingdom" target="_blank" rel="noopener">★ Star on GitHub</a></p>
         </div>
         <p class="entry-press-hint">- click to enter -</p>
       </div>
@@ -1238,6 +1238,16 @@
       document.getElementById('info-panel').style.display = 'none';
       var av = document.getElementById('info-avatar');
       if (av) { av.style.display = 'none'; av.src = ''; }
+    });
+
+    // Prevent clicks on overlay panels from reaching the Phaser canvas underneath
+    ['info-panel', 'sheet-panel', 'profile-panel'].forEach(function(id) {
+      var panel = document.getElementById(id);
+      if (panel) {
+        panel.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+        panel.addEventListener('pointerup', function(e) { e.stopPropagation(); });
+        panel.addEventListener('click', function(e) { e.stopPropagation(); });
+      }
     });
 
     // Legend toggle button

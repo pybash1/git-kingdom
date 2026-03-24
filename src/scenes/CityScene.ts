@@ -540,20 +540,9 @@ export class CityScene extends Phaser.Scene {
         }
       });
       let spriteClicked = false;
-      // Helper: check if pointer is over a visible DOM overlay panel
-      const isOverPanel = (pointer: Phaser.Input.Pointer): boolean => {
-        const el = document.elementFromPoint(pointer.x, pointer.y);
-        if (!el) return false;
-        const panel = el.closest('#info-panel') || el.closest('#sheet-panel') ||
-          el.closest('#profile-panel');
-        // Only block if the panel is actually visible
-        return !!(panel && (panel as HTMLElement).style.display !== 'none');
-      };
       this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
         if (isDragging) { isDragging = false; return; }
         if (spriteClicked) { spriteClicked = false; return; }
-        // Don't process game clicks when pointer is over a DOM panel
-        if (isOverPanel(pointer)) return;
         const wp = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
         const tx = Math.floor(wp.x / TILE_SIZE);
         const ty = Math.floor(wp.y / TILE_SIZE);
@@ -673,8 +662,7 @@ export class CityScene extends Phaser.Scene {
       sprite.setInteractive({ useHandCursor: true });
       sprite.on('pointerover', () => this.showHoverTooltip(i));
       sprite.on('pointerout', () => this.hideHoverTooltip());
-      sprite.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-        if (isOverPanel(pointer)) { spriteClicked = true; return; }
+      sprite.on('pointerup', () => {
         this.showBuildingInfo(b);
         spriteClicked = true;
       });
