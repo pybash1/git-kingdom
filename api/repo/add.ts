@@ -95,6 +95,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Repo not found on GitHub.' });
     }
 
+    // Reject repos with 0 stars (they don't appear on the map)
+    if (metrics.repo.stargazers_count < 1) {
+      return res.status(400).json({ error: 'Repo needs at least 1 star to join the kingdom.' });
+    }
+
     // 7. Upsert repo
     const { data: repoRow, error: repoErr } = await service.from('repos').upsert({
       full_name: metrics.repo.full_name.toLowerCase(),

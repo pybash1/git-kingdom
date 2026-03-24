@@ -32,10 +32,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to fetch repos' });
     }
 
-    // Flatten the join result and sort by stars
+    // Flatten the join result, filter out 0-star repos, and sort by stars
     const repos = (userRepos || [])
       .map((ur: any) => ur.repos)
-      .filter(Boolean)
+      .filter((r: any) => r && r.stargazers >= 1)
       .sort((a: any, b: any) => b.stargazers - a.stargazers);
 
     res.json({ repos });
