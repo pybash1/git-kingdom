@@ -1483,7 +1483,7 @@
         if (!val) { status.textContent = 'Enter a repo URL or owner/repo'; status.style.color = '#e07040'; return; }
         status.textContent = 'Fetching...'; status.style.color = '#c8b89a';
         submitBtn.disabled = true;
-        fetch('/api/repo/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ repo: val }) })
+        fetch('/api/repo/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: val }) })
           .then(function(r) { return r.json(); })
           .then(function(d) {
             submitBtn.disabled = false;

@@ -200,7 +200,7 @@ export async function addRepo(input: string): Promise<{ ok: boolean; repo?: stri
   const res = await fetch('/api/repo/add', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ repo: input }),
+    body: JSON.stringify({ url: input }),
   });
   return res.json();
 }
