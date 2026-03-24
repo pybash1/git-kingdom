@@ -10,6 +10,7 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createServiceClient } from '../lib/supabase';
+import { getNextToken } from '../lib/github-tokens';
 
 const GH_API = 'https://api.github.com';
 
@@ -25,8 +26,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) {
+  let token: string;
+  try {
+    token = getNextToken();
+  } catch {
     return res.status(500).json({ error: 'GITHUB_TOKEN not configured' });
   }
 
