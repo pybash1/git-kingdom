@@ -420,6 +420,40 @@ async function bootDirect(
   };
   (window as any).__game = game;
 
+  // Deep link: /username (no repo) → find their top repo's kingdom, enter city, show character sheet
+  if (highlightUser && !focusRepo) {
+    // Find the kingdom where this user has the most repos (or their top-starred repo)
+    const userRepos = languageKingdoms
+      .flatMap(k => k.repos.filter(r =>
+        r.contributors?.some(c => c.login.toLowerCase() === highlightUser.toLowerCase()) ||
+        r.repo.full_name.toLowerCase().startsWith(highlightUser.toLowerCase() + '/')
+      ))
+      .sort((a, b) => b.repo.stargazers_count - a.repo.stargazers_count);
+
+    if (userRepos.length > 0) {
+      const topRepo = userRepos[0];
+      const targetKingdom = languageKingdoms.find(k =>
+        k.repos.some(r => r.repo.full_name === topRepo.repo.full_name)
+      );
+      if (targetKingdom) {
+        game.scene.start('CityScene', {
+          kingdom: targetKingdom,
+          spritePacks,
+          highlightUser,
+          focusRepo: null,
+          returnData: {
+            kingdoms: languageKingdoms,
+            spritePacks,
+            highlightUser,
+          },
+          autoShowSheet: highlightUser,
+        });
+        console.log(`[User link] Jumping to ${targetKingdom.language} city for ${highlightUser}`);
+        trackPageView(`/city/${targetKingdom.language.toLowerCase()}`, `Git Kingdom | ${highlightUser}`);
+      }
+    }
+  }
+
   // Deep link: /owner/repo → jump straight into the city containing that repo
   if (focusRepo && highlightUser) {
     const fullName = `${highlightUser}/${focusRepo}`;

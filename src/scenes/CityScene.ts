@@ -219,11 +219,13 @@ export class CityScene extends Phaser.Scene {
         highlightUser?: string;
         focusRepo?: string; // full_name like "facebook/react" — zoom to this building
         returnData?: any; // data needed to rebuild world scene
+        autoShowSheet?: string; // login — auto-open character sheet after load
       };
 
       this.highlightUser = data.highlightUser?.toLowerCase() || null;
       this.returnData = data.returnData;
       const focusRepo = data.focusRepo?.toLowerCase() || null;
+      const autoShowSheet = data.autoShowSheet || null;
 
       // Reset arrays (scene may be restarted)
       this.buildingLabels = [];
@@ -593,6 +595,13 @@ export class CityScene extends Phaser.Scene {
 
       const el = document.getElementById('loading');
       if (el) el.style.display = 'none';
+
+      // Auto-open character sheet if requested (from /<username> URL route)
+      if (autoShowSheet) {
+        this.time.delayedCall(300, () => {
+          this.showCharacterSheet(autoShowSheet);
+        });
+      }
 
     } catch (err) {
       console.error('[CityScene] create() error:', err);
