@@ -1340,6 +1340,15 @@
           }
         });
       });
+
+      // Add refresh button at the bottom
+      var refreshDiv = document.createElement('div');
+      refreshDiv.style.cssText = 'margin-top:10px;text-align:center;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1)';
+      refreshDiv.innerHTML = '<button id="profile-refresh" class="rpgui-button" style="font-size:9px"><p>↻ Refresh repos</p></button>';
+      reposEl.appendChild(refreshDiv);
+      document.getElementById('profile-refresh').addEventListener('click', function() {
+        claimUserRepos(subtitleEl, reposEl);
+      });
     }
 
     window.__showProfilePanel = function() {
