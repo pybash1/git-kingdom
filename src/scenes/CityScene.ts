@@ -539,8 +539,11 @@ export class CityScene extends Phaser.Scene {
           this.cameras.main.scrollY = camStartY - dy / this.cameras.main.zoom;
         }
       });
+      let spriteClicked = false;
       this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
         if (isDragging) { isDragging = false; return; }
+        // If a building sprite's own click handler already fired, skip the tile-based lookup
+        if (spriteClicked) { spriteClicked = false; return; }
         const wp = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
         const tx = Math.floor(wp.x / TILE_SIZE);
         const ty = Math.floor(wp.y / TILE_SIZE);
@@ -656,10 +659,14 @@ export class CityScene extends Phaser.Scene {
       // Y-sort depth: buildings further down render on top
       sprite.setDepth(4 + (b.y + b.height) / mapHeight * 2);
 
-      // Make interactive for hover tooltip
+      // Make interactive for hover tooltip + click
       sprite.setInteractive({ useHandCursor: true });
       sprite.on('pointerover', () => this.showHoverTooltip(i));
       sprite.on('pointerout', () => this.hideHoverTooltip());
+      sprite.on('pointerup', () => {
+        this.showBuildingInfo(b);
+        spriteClicked = true;
+      });
 
       this.buildingSpriteRefs.push({ sprite, rank: b.rank, seed, buildingIndex: i });
     }
