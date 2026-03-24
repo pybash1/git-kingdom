@@ -55,13 +55,23 @@ function isContentRepo(m: KingdomMetrics): boolean {
 function groupByLanguage(allMetrics: KingdomMetrics[]): LanguageKingdom[] {
   const groups = new Map<string, KingdomMetrics[]>();
 
+  // Non-programming languages that should always go to Uncharted
+  const LANGUAGE_BLOCKLIST = new Set([
+    'HTML', 'CSS', 'SCSS', 'Less', 'Markdown', 'Dockerfile',
+    'Makefile', 'Nix', 'HCL', 'Vue', 'Blade', 'FreeMarker',
+    'Vim Script', 'LLVM', 'Wren', 'BASIC', 'Batchfile',
+    'PowerShell', 'Nunjucks', 'EJS', 'Handlebars', 'Pug',
+    'Smarty', 'Twig', 'Mustache', 'XSLT', 'Jsonnet',
+  ]);
+
   let filtered = 0;
   for (const m of allMetrics) {
-    const lang = m.repo.language || 'Uncharted';
+    let lang = m.repo.language || 'Uncharted';
     if (isContentRepo(m)) {
       filtered++;
       continue;
     }
+    if (LANGUAGE_BLOCKLIST.has(lang)) lang = 'Uncharted';
     if (!groups.has(lang)) groups.set(lang, []);
     groups.get(lang)!.push(m);
   }
