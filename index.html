@@ -1454,6 +1454,14 @@
 
           subtitleEl.textContent = 'Loading your kingdom...';
 
+          // Track successful claim
+          if (typeof window.gtag === 'function' && window.__gkUser) {
+            window.gtag('event', 'world_joined', {
+              user_login: window.__gkUser.login,
+              added_repos: joinData.addedRepos || 0,
+            });
+          }
+
           // Invalidate world cache so new repos appear on the map
           if (window.__invalidateWorldCache) window.__invalidateWorldCache();
 
