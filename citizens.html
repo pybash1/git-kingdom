@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Citizens | Git Kingdom</title>
+  <meta name="description" content="Browse all citizens of Git Kingdom — GitHub developers visualized as fantasy RPG characters." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://gitkingdom.com/citizens" />
+  <meta property="og:title" content="Citizens of Git Kingdom" />
+  <meta property="og:description" content="Browse all citizens — GitHub developers as fantasy RPG characters with stats, titles, and kingdoms." />
+  <meta property="og:image" content="https://gitkingdom.com/assets/og-image.jpg" />
+  <meta property="og:url" content="https://gitkingdom.com/citizens" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #d4c8a0;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    .page-header {
+      background: linear-gradient(180deg, #16213e 0%, #1a1a2e 100%);
+      border-bottom: 3px solid #8b6914;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .page-header a { text-decoration: none; }
+    .logo {
+      font-family: 'Silkscreen', monospace;
+      color: #ffd700;
+      font-size: 20px;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px rgba(255,215,0,0.3);
+    }
+    nav { display: flex; gap: 20px; }
+    nav a {
+      font-family: 'Silkscreen', monospace;
+      color: #a89060;
+      text-decoration: none;
+      font-size: 11px;
+      letter-spacing: 1px;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: #ffd700; }
+    nav a.active { color: #ffd700; }
+    .content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    h1 {
+      font-family: 'Silkscreen', monospace;
+      color: #ffd700;
+      font-size: 28px;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+    .subtitle { font-size: 14px; color: #8a7a58; margin-bottom: 32px; }
+    .citizen-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .citizen-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid #3a3020;
+      border-radius: 8px;
+      padding: 16px 20px;
+      transition: border-color 0.2s;
+    }
+    .citizen-card:hover {
+      border-color: #8b6914;
+    }
+    .citizen-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid #5a4a2a;
+      flex-shrink: 0;
+    }
+    .citizen-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .citizen-name {
+      font-family: 'Silkscreen', monospace;
+      font-size: 14px;
+      color: #ffd700;
+      text-decoration: none;
+    }
+    .citizen-name:hover { color: #ffe44d; }
+    .citizen-repos {
+      font-size: 12px;
+      color: #8a7a58;
+      margin-top: 4px;
+    }
+    .citizen-repos a {
+      color: #c0a870;
+      text-decoration: none;
+    }
+    .citizen-repos a:hover { color: #ffd700; }
+    .repo-stars {
+      color: #e8c840;
+      font-size: 11px;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-top: 32px;
+    }
+    .pagination button {
+      font-family: 'Silkscreen', monospace;
+      background: linear-gradient(180deg, #5a4a2a, #3a3020);
+      color: #d4c8a0;
+      border: 1px solid #8b6914;
+      padding: 8px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      letter-spacing: 1px;
+      transition: background 0.2s;
+    }
+    .pagination button:hover { background: linear-gradient(180deg, #8b6914, #5a4a2a); }
+    .pagination button:disabled { opacity: 0.3; cursor: default; }
+    .pagination .page-info {
+      font-family: 'Silkscreen', monospace;
+      font-size: 11px;
+      color: #8a7a58;
+    }
+    .loading { text-align: center; color: #8a7a58; padding: 40px; font-size: 14px; }
+    .cta-bar {
+      text-align: center;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #2a2418;
+    }
+    .cta {
+      display: inline-block;
+      font-family: 'Silkscreen', monospace;
+      background: linear-gradient(180deg, #e8a020, #c07818);
+      color: #1a1a2e;
+      padding: 12px 28px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: 1px;
+      transition: transform 0.15s;
+    }
+    .cta:hover { transform: scale(1.03); }
+    .page-footer {
+      border-top: 2px solid #2a2418;
+      padding: 24px 24px 80px;
+      text-align: center;
+      font-size: 12px;
+      color: #5a4a30;
+    }
+    .page-footer a { color: #8a7a58; text-decoration: none; margin: 0 10px; }
+    .page-footer a:hover { color: #ffd700; }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <a href="/" class="logo">GIT KINGDOM</a>
+    <nav>
+      <a href="/citizens" class="active">Citizens</a>
+      <a href="/about">About</a>
+      <a href="/how-it-works">How It Works</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+  </header>
+
+  <main class="content">
+    <h1>Citizens of the Kingdom</h1>
+    <p class="subtitle">Developers who have claimed their repos — newest first</p>
+
+    <div id="citizen-list" class="citizen-grid">
+      <div class="loading">Summoning citizens...</div>
+    </div>
+
+    <div id="pagination" class="pagination" style="display:none">
+      <button id="prev-btn" disabled>&#9664; Prev</button>
+      <span id="page-info" class="page-info"></span>
+      <button id="next-btn">Next &#9654;</button>
+    </div>
+
+    <div class="cta-bar">
+      <a href="/api/auth/login" class="cta">Claim Your Repos</a>
+    </div>
+  </main>
+
+  <footer class="page-footer">
+    <p>&copy; 2026 Git Kingdom</p>
+    <p>
+      <a href="/">Enter the Kingdom</a>
+      <a href="/about">About</a>
+      <a href="/how-it-works">How It Works</a>
+      <a href="/faq">FAQ</a>
+      <a href="/privacy">Privacy</a>
+    </p>
+  </footer>
+
+  <script>
+    var currentPage = 1;
+    var limit = 20;
+
+    function fetchCitizens(page) {
+      var list = document.getElementById('citizen-list');
+      list.innerHTML = '<div class="loading">Summoning citizens...</div>';
+
+      fetch('/api/citizens?page=' + page + '&limit=' + limit)
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          if (!data || !data.citizens || data.citizens.length === 0) {
+            list.innerHTML = '<div class="loading">No citizens found yet. Be the first!</div>';
+            return;
+          }
+
+          var html = '';
+          data.citizens.forEach(function(c) {
+            var repoHtml = '';
+            if (c.top_repos && c.top_repos.length > 0) {
+              repoHtml = c.top_repos.map(function(r) {
+                var stars = r.stars >= 1000 ? Math.round(r.stars / 1000) + 'k' : r.stars;
+                return '<a href="/' + r.full_name + '">' + r.name + '</a> <span class="repo-stars">' + stars + '★</span>';
+              }).join(' · ');
+            }
+
+            html += '<div class="citizen-card">' +
+              '<img class="citizen-avatar" src="' + (c.avatar_url || '') + '&s=96" alt="' + c.login + '" />' +
+              '<div class="citizen-info">' +
+                '<a class="citizen-name" href="/citizen/' + c.login + '">' + c.login + '</a>' +
+                (repoHtml ? '<div class="citizen-repos">' + repoHtml + '</div>' : '') +
+              '</div>' +
+            '</div>';
+          });
+
+          list.innerHTML = html;
+
+          // Update pagination
+          var pagination = document.getElementById('pagination');
+          var pageInfo = document.getElementById('page-info');
+          var prevBtn = document.getElementById('prev-btn');
+          var nextBtn = document.getElementById('next-btn');
+
+          pagination.style.display = 'flex';
+          pageInfo.textContent = 'Page ' + data.page + ' of ' + data.totalPages;
+          prevBtn.disabled = data.page <= 1;
+          nextBtn.disabled = data.page >= data.totalPages;
+          currentPage = data.page;
+
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        })
+        .catch(function() {
+          list.innerHTML = '<div class="loading">Failed to load citizens. Try refreshing.</div>';
+        });
+    }
+
+    document.getElementById('prev-btn').addEventListener('click', function() {
+      if (currentPage > 1) fetchCitizens(currentPage - 1);
+    });
+    document.getElementById('next-btn').addEventListener('click', function() {
+      fetchCitizens(currentPage + 1);
+    });
+
+    fetchCitizens(1);
+  </script>
+</body>
+</html>

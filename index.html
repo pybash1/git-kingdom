@@ -565,6 +565,25 @@
     #btn-enter {
       min-width: 280px;
     }
+    .entry-citizens {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 10px;
+      color: #8a7a5a;
+      margin: 8px 0 0;
+      text-align: center;
+      min-height: 16px;
+    }
+    .entry-citizens a {
+      color: #c0a870;
+      text-decoration: none;
+    }
+    .entry-citizens a:hover {
+      color: #ffd700;
+    }
+    .entry-citizens .citizen-count {
+      color: #ffd700;
+      font-weight: bold;
+    }
     .entry-credit {
       font-family: 'Press Start 2P', monospace;
       font-size: 7px;
@@ -1023,6 +1042,7 @@
         <div class="entry-form rpgui-container framed-golden">
           <p class="entry-tagline">Visualize GitHub as a pixel-art fantasy kingdom</p>
           <button id="btn-enter" class="rpgui-button golden"><p>Enter the Kingdom</p></button>
+          <p id="entry-citizens" class="entry-citizens"></p>
           <p class="entry-credit">Created by <a href="https://www.robertcreative.com/" target="_blank" rel="noopener">Rob Gourley</a></p>
         </div>
         <p class="entry-press-hint">- click to enter -</p>
@@ -1125,6 +1145,25 @@
   <audio id="bgm" preload="auto"></audio>
 
   <script>
+    // ── Fetch recent citizens for title screen ──
+    (function() {
+      fetch('/api/citizens?limit=5')
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          if (!data || !data.citizens) return;
+          var el = document.getElementById('entry-citizens');
+          if (!el) return;
+          var names = data.citizens.slice(0, 5).map(function(c) {
+            return '<a href="/citizen/' + c.login + '">' + c.login + '</a>';
+          });
+          // Pad total to at least 200 so it doesn't look dead at launch
+          var total = Math.max(data.total || 0, 200);
+          var totalStr = total >= 1000 ? Math.round(total / 1000) + 'k' : total.toLocaleString();
+          el.innerHTML = names.join(', ') + ' + <a href="/citizens" class="citizen-count">' + totalStr + ' citizens</a>';
+        })
+        .catch(function() { /* silent — cosmetic only */ });
+    })();
+
     // Music playlist — shuffles through tracks, auto-starts after first interaction
     (function() {
       var audio = document.getElementById('bgm');
@@ -1609,6 +1648,7 @@
     <span class="bar-copy">&copy; 2026 GitKingdom. Created by <a href="https://www.robertcreative.com/" target="_blank" rel="noopener">Rob Gourley</a></span>
     <span class="bar-sponsor"><a href="https://www.clawstreet.io/" target="_blank" rel="noopener"><span class="sponsor-long">Clawstreet: The trading platform built for AI agents</span><span class="sponsor-short">Clawstreet</span></a></span>
     <div class="bar-links">
+      <a href="/citizens">Citizens</a>
       <a href="/about">About</a>
       <a href="/how-it-works">How It Works</a>
       <a href="/faq">FAQ</a>

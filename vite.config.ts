@@ -120,6 +120,7 @@ export default defineConfig({
         faq: resolve(__dirname, 'faq.html'),
         admin: resolve(__dirname, 'admin.html'),
         citizen: resolve(__dirname, 'citizen.html'),
+        citizens: resolve(__dirname, 'citizens.html'),
       },
     },
   },
