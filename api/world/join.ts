@@ -43,66 +43,87 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const metrics = await fetchUserReposAsMetrics(login, githubToken, MAX_REPOS_PER_JOIN, 1);
     console.log(`[join] ${login}: found ${metrics.length} repos`);
 
-    let addedRepos = 0;
-    const addedRepoNames: string[] = [];
+    // Batch all DB operations instead of sequential per-repo
+    const repoRows = metrics.map(m => ({
+      full_name: m.repo.full_name.toLowerCase(),
+      name: m.repo.name,
+      owner_login: m.repo.owner?.login || login,
+      owner_avatar: m.repo.owner?.avatar_url || meta.avatar_url,
+      description: m.repo.description,
+      language: m.repo.language,
+      stargazers: m.repo.stargazers_count,
+      forks: m.repo.forks_count,
+      open_issues: m.repo.open_issues_count,
+      size_kb: m.repo.size || 0,
+      created_at: m.repo.created_at,
+      pushed_at: m.repo.pushed_at || m.repo.updated_at,
+      topics: m.repo.topics || [],
+      total_commits: m.totalCommits,
+      merged_prs: Math.floor(m.totalCommits * 0.3),
+      king_login: m.king?.login || null,
+      king_avatar: m.king?.avatar_url || null,
+      king_contributions: m.king?.contributions || 0,
+      fetched_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
 
-    for (const m of metrics) {
-      // Upsert each repo
-      const { data: repo, error: repoErr } = await service.from('repos').upsert({
-        full_name: m.repo.full_name.toLowerCase(),
-        name: m.repo.name,
-        owner_login: m.repo.owner?.login || login,
-        owner_avatar: m.repo.owner?.avatar_url || meta.avatar_url,
-        description: m.repo.description,
-        language: m.repo.language,
-        stargazers: m.repo.stargazers_count,
-        forks: m.repo.forks_count,
-        open_issues: m.repo.open_issues_count,
-        size_kb: m.repo.size || 0,
-        created_at: m.repo.created_at,
-        pushed_at: m.repo.pushed_at || m.repo.updated_at,
-        topics: m.repo.topics || [],
-        total_commits: m.totalCommits,
-        merged_prs: Math.floor(m.totalCommits * 0.3),
-        king_login: m.king?.login || null,
-        king_avatar: m.king?.avatar_url || null,
-        king_contributions: m.king?.contributions || 0,
-        fetched_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'full_name' }).select('id').single();
+    // 1. Batch upsert all repos (one DB call)
+    const { data: upsertedRepos, error: repoErr } = await service.from('repos')
+      .upsert(repoRows, { onConflict: 'full_name' })
+      .select('id, full_name');
 
-      if (repoErr || !repo) {
-        console.warn(`[join] Failed to upsert ${m.repo.full_name}:`, repoErr?.message);
-        continue;
-      }
-
-      // Upsert contributors for this repo
-      if (m.contributors.length > 0) {
-        const { error: contribErr } = await service.from('contributors').upsert(
-          m.contributors.slice(0, 20).map((c) => ({
-            repo_id: repo.id,
-            login: c.login,
-            avatar_url: c.avatar_url,
-            contributions: c.contributions || 0,
-          })),
-          { onConflict: 'repo_id,login' }
-        );
-        if (contribErr) {
-          console.warn(`[join] Contributors upsert failed for ${m.repo.full_name}:`, contribErr.message);
-        }
-      }
-
-      // Link user to repo
-      try {
-        await service.from('user_repos').upsert({
-          user_id: user.id,
-          repo_id: repo.id,
-        }, { onConflict: 'user_id,repo_id' });
-      } catch { /* ignore duplicate */ }
-
-      addedRepos++;
-      addedRepoNames.push(m.repo.full_name);
+    if (repoErr) {
+      console.warn(`[join] Batch repo upsert failed:`, repoErr.message);
+      return res.status(500).json({ error: 'Failed to save repos' });
     }
+
+    // Build a map of full_name → repo id for contributor + user_repos linking
+    const repoIdMap = new Map<string, number>();
+    for (const r of (upsertedRepos || [])) {
+      repoIdMap.set(r.full_name, r.id);
+    }
+
+    // 2. Batch upsert all contributors (chunked at 500 to stay under PostgREST row limit)
+    const allContributors: { repo_id: number; login: string; avatar_url: string; contributions: number }[] = [];
+    for (const m of metrics) {
+      const repoId = repoIdMap.get(m.repo.full_name.toLowerCase());
+      if (!repoId) continue;
+      for (const c of m.contributors.slice(0, 20)) {
+        allContributors.push({
+          repo_id: repoId,
+          login: c.login,
+          avatar_url: c.avatar_url,
+          contributions: c.contributions || 0,
+        });
+      }
+    }
+
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < allContributors.length; i += CHUNK_SIZE) {
+      const chunk = allContributors.slice(i, i + CHUNK_SIZE);
+      const { error: contribErr } = await service.from('contributors')
+        .upsert(chunk, { onConflict: 'repo_id,login' });
+      if (contribErr) {
+        console.warn(`[join] Contributor upsert chunk ${i / CHUNK_SIZE + 1} failed:`, contribErr.message);
+      }
+    }
+
+    // 3. Batch upsert all user_repos links (one DB call)
+    const userRepoLinks = Array.from(repoIdMap.values()).map(repoId => ({
+      user_id: user.id,
+      repo_id: repoId,
+    }));
+
+    if (userRepoLinks.length > 0) {
+      const { error: linkErr } = await service.from('user_repos')
+        .upsert(userRepoLinks, { onConflict: 'user_id,repo_id' });
+      if (linkErr) {
+        console.warn(`[join] Batch user_repos upsert failed:`, linkErr.message);
+      }
+    }
+
+    const addedRepos = repoIdMap.size;
+    const addedRepoNames = Array.from(repoIdMap.keys());
 
     // Log activity for admin visibility
     console.log(`[join] ${login}: added ${addedRepos} repos: ${addedRepoNames.join(', ')}`);
