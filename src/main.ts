@@ -69,13 +69,19 @@ function groupByLanguage(allMetrics: KingdomMetrics[]): LanguageKingdom[] {
     console.log(`Filtered ${filtered} content repos (awesome-lists, roadmaps, etc.)`);
   }
 
-  // Filter out tiny language groups (< 3 repos) — they clutter the world map
-  // and are usually repos whose GitHub-detected language differs from expected
+  // Languages with fewer than 3 repos get merged into Uncharted
   const MIN_REPOS_FOR_KINGDOM = 3;
+  for (const [language, repos] of groups) {
+    if (language !== 'Uncharted' && repos.length < MIN_REPOS_FOR_KINGDOM) {
+      const uncharted = groups.get('Uncharted') || [];
+      uncharted.push(...repos);
+      groups.set('Uncharted', uncharted);
+      groups.delete(language);
+    }
+  }
 
   const kingdoms: LanguageKingdom[] = [];
   for (const [language, repos] of groups) {
-    if (repos.length < MIN_REPOS_FOR_KINGDOM) continue;
     const commitsByUser = new Map<string, { login: string; contributions: number; avatar_url: string }>();
     for (const r of repos) {
       for (const c of r.contributors) {
