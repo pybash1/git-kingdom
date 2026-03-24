@@ -540,10 +540,21 @@ export class CityScene extends Phaser.Scene {
         }
       });
       let spriteClicked = false;
+      // Helper: check if pointer is over a DOM UI panel (not the game canvas)
+      const isOverPanel = (pointer: Phaser.Input.Pointer): boolean => {
+        const el = document.elementFromPoint(pointer.x, pointer.y);
+        if (!el) return false;
+        // Check if click target is inside any UI panel or the game header
+        return !!(el.closest('#info-panel') || el.closest('#sheet-panel') ||
+          el.closest('#profile-panel') || el.closest('#buildings-panel') ||
+          el.closest('#citizens-panel') || el.closest('#game-header') ||
+          el.closest('.floating-bar'));
+      };
       this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
         if (isDragging) { isDragging = false; return; }
-        // If a building sprite's own click handler already fired, skip the tile-based lookup
         if (spriteClicked) { spriteClicked = false; return; }
+        // Don't process game clicks when pointer is over a DOM panel
+        if (isOverPanel(pointer)) return;
         const wp = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
         const tx = Math.floor(wp.x / TILE_SIZE);
         const ty = Math.floor(wp.y / TILE_SIZE);
@@ -663,7 +674,8 @@ export class CityScene extends Phaser.Scene {
       sprite.setInteractive({ useHandCursor: true });
       sprite.on('pointerover', () => this.showHoverTooltip(i));
       sprite.on('pointerout', () => this.hideHoverTooltip());
-      sprite.on('pointerup', () => {
+      sprite.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+        if (isOverPanel(pointer)) { spriteClicked = true; return; }
         this.showBuildingInfo(b);
         spriteClicked = true;
       });
@@ -1698,7 +1710,12 @@ export class CityScene extends Phaser.Scene {
         if (bBtn) bBtn.style.display = 'none';
         if (cBtn) cBtn.style.display = 'none';
         this.hideInfoPanel();
-        this.scene.start('WorldScene', this.returnData);
+        if (this.returnData) {
+          this.scene.start('WorldScene', this.returnData);
+        } else {
+          // No return data (e.g. direct URL entry) — reload to world map
+          window.location.href = '/';
+        }
       };
       leftEl.prepend(backBtn);
 
@@ -2153,7 +2170,7 @@ function buildSheetHTML(d: any): string {
   // Actions
   const shareUrl = `${window.location.origin}/citizen/${encodeURIComponent(d.login)}`;
   h += `<div class="sp-actions">`;
-  h += `<a href="https://github.com/${esc(d.login)}" target="_blank" class="sp-btn">GitHub</a>`;
+  h += `<a href="https://github.com/${esc(d.login)}" target="_blank" class="sp-btn">Follow on GitHub</a>`;
   h += `<button class="sp-btn sp-share-btn" data-url="${esc(shareUrl)}">📋 Share</button>`;
   h += `<a href="/citizen/${esc(d.login)}" target="_blank" class="sp-btn">Full Sheet</a>`;
   h += `</div>`;
