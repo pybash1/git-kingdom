@@ -816,8 +816,12 @@ export class WorldScene extends Phaser.Scene {
     );
     if (!kingdom) return;
 
-    // Hide world UI
+    // Hide world UI and clear stale kingdom info from the shared info panel
     this.hideInfoPanel();
+    document.getElementById('info-stats')!.innerHTML = '';
+    document.getElementById('info-name')!.textContent = '';
+    document.getElementById('info-tier')!.textContent = '';
+    document.getElementById('info-king')!.innerHTML = '';
     document.getElementById('legend')!.style.display = 'none';
 
     // Analytics
