@@ -33,6 +33,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       login,
       avatar_url: meta.avatar_url,
     }, { onConflict: 'id' });
+
+    // Check if this is a first-time user (no repos yet)
+    const { count } = await service.from('user_repos')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', data.session.user.id);
+
+    if (!count || count === 0) {
+      // First login — set cookie so frontend auto-triggers join
+      // MUST use appendHeader (not setHeader) to avoid overwriting Supabase's session cookies
+      res.appendHeader('Set-Cookie', 'gk_needs_join=1; Path=/; Max-Age=300; SameSite=Lax');
+    }
   } catch (err: any) {
     console.error('[/api/auth/callback] User upsert failed:', err?.message);
     // Non-fatal — user can still use the app

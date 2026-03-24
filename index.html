@@ -1275,6 +1275,15 @@
           }
           // Store user info globally for game scenes
           window.__gkUser = user;
+          // Auto-join: if first login cookie is set, trigger join immediately
+          if (document.cookie.indexOf('gk_needs_join=1') !== -1) {
+            // Clear the cookie
+            document.cookie = 'gk_needs_join=; Path=/; Max-Age=0';
+            // Auto-open profile panel and start claiming
+            setTimeout(function() {
+              if (window.__showProfilePanel) window.__showProfilePanel();
+            }, 500);
+          }
         })
         .catch(function() { /* not signed in, that's fine */ });
     })();
