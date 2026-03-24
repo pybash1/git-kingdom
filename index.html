@@ -1366,37 +1366,93 @@
       fetch('/api/user/repos', { credentials: 'include' })
         .then(function(res) { return res.ok ? res.json() : null; })
         .then(function(data) {
-          if (!data || !data.repos || data.repos.length === 0) {
-            subtitleEl.textContent = 'Claiming your repos...';
-            reposEl.innerHTML = '';
-            // Auto-join: add all public repos to the world, then re-fetch
-            fetch('/api/world/join', { method: 'POST', credentials: 'include' })
-              .then(function(r) { return r.ok ? r.json() : null; })
-              .then(function() {
-                return fetch('/api/user/repos', { credentials: 'include' });
-              })
-              .then(function(r2) { return r2.ok ? r2.json() : null; })
-              .then(function(d2) {
-                if (d2 && d2.repos && d2.repos.length > 0) {
-                  renderProfileRepos(d2.repos, subtitleEl, reposEl);
-                } else {
-                  subtitleEl.textContent = 'No eligible repos found';
-                  reposEl.innerHTML = '<div style="font-size:9px;color:#8a8070;margin-top:8px">' +
-                    'Public repos with at least 1 star become buildings in the kingdom.</div>';
-                }
-              })
-              .catch(function() {
-                subtitleEl.textContent = 'Failed to claim repos';
-              });
+          if (data && data.repos && data.repos.length > 0) {
+            renderProfileRepos(data.repos, subtitleEl, reposEl);
             return;
           }
 
-          renderProfileRepos(data.repos, subtitleEl, reposEl);
+          // First time — need to claim repos
+          claimUserRepos(subtitleEl, reposEl);
         })
         .catch(function() {
           subtitleEl.textContent = 'Failed to load repos';
+          reposEl.innerHTML = '<div style="margin-top:8px;text-align:center">' +
+            '<button id="profile-retry" class="rpgui-button golden" style="font-size:9px"><p>Retry</p></button></div>';
+          document.getElementById('profile-retry').addEventListener('click', function() {
+            claimUserRepos(subtitleEl, reposEl);
+          });
         });
     };
+
+    function claimUserRepos(subtitleEl, reposEl) {
+      subtitleEl.textContent = 'Fetching your repos from GitHub...';
+      reposEl.innerHTML = '<div style="font-size:9px;color:#c8b89a;text-align:center;margin-top:12px">' +
+        'This can take up to 30 seconds for large accounts.</div>';
+
+      var abortController = new AbortController();
+      var timedOut = false;
+
+      // 45s timeout — Vercel functions time out at 60s
+      var timeout = setTimeout(function() {
+        timedOut = true;
+        abortController.abort();
+        subtitleEl.textContent = 'Taking longer than expected...';
+        reposEl.innerHTML = '<div style="font-size:9px;color:#e07040;text-align:center;margin-top:8px">' +
+          'The server might be busy. Your repos may still be processing.</div>' +
+          '<div style="margin-top:8px;text-align:center">' +
+          '<button id="profile-retry" class="rpgui-button golden" style="font-size:9px"><p>Try Again</p></button></div>';
+        document.getElementById('profile-retry').addEventListener('click', function() {
+          claimUserRepos(subtitleEl, reposEl);
+        });
+      }, 45000);
+
+      fetch('/api/world/join', { method: 'POST', credentials: 'include', signal: abortController.signal })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(joinData) {
+          clearTimeout(timeout);
+          if (timedOut) return;
+
+          if (!joinData || !joinData.ok) {
+            subtitleEl.textContent = 'Failed to claim repos';
+            reposEl.innerHTML = '<div style="margin-top:8px;text-align:center">' +
+              '<button id="profile-retry" class="rpgui-button golden" style="font-size:9px"><p>Retry</p></button></div>';
+            document.getElementById('profile-retry').addEventListener('click', function() {
+              claimUserRepos(subtitleEl, reposEl);
+            });
+            return;
+          }
+
+          subtitleEl.textContent = 'Loading your kingdom...';
+
+          // Invalidate world cache so new repos appear on the map
+          if (window.__invalidateWorldCache) window.__invalidateWorldCache();
+
+          // Re-fetch user repos to render the list
+          return fetch('/api/user/repos', { credentials: 'include' });
+        })
+        .then(function(r2) { if (r2) return r2.ok ? r2.json() : null; })
+        .then(function(d2) {
+          clearTimeout(timeout);
+          if (timedOut) return;
+          if (d2 && d2.repos && d2.repos.length > 0) {
+            renderProfileRepos(d2.repos, subtitleEl, reposEl);
+          } else {
+            subtitleEl.textContent = 'No eligible repos found';
+            reposEl.innerHTML = '<div style="font-size:9px;color:#8a8070;margin-top:8px">' +
+              'Public repos with at least 1 star become buildings in the kingdom.</div>';
+          }
+        })
+        .catch(function(err) {
+          clearTimeout(timeout);
+          if (timedOut) return;
+          subtitleEl.textContent = 'Failed to claim repos';
+          reposEl.innerHTML = '<div style="margin-top:8px;text-align:center">' +
+            '<button id="profile-retry" class="rpgui-button golden" style="font-size:9px"><p>Retry</p></button></div>';
+          document.getElementById('profile-retry').addEventListener('click', function() {
+            claimUserRepos(subtitleEl, reposEl);
+          });
+        });
+    }
 
     // ─── Panel position reset (called before showing a panel) ───
     window.__resetPanelPos = function(panel) {
