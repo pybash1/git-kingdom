@@ -262,6 +262,47 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
+    console.log(`[borders] ${borderSegments.length} border segments from ${W}x${H} map`);
+
+    // Also draw borders where owned land meets unclaimed land between kingdoms
+    // This catches the gap between kingdoms that don't directly touch
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const k = ownership[y][x];
+        if (k >= 0) continue; // skip owned tiles — handled above
+        // Check if this unclaimed tile sits between two different kingdoms
+        const neighbors = new Set<number>();
+        if (x > 0 && ownership[y][x - 1] >= 0) neighbors.add(ownership[y][x - 1]);
+        if (x + 1 < W && ownership[y][x + 1] >= 0) neighbors.add(ownership[y][x + 1]);
+        if (y > 0 && ownership[y - 1][x] >= 0) neighbors.add(ownership[y - 1][x]);
+        if (y + 1 < H && ownership[y + 1][x] >= 0) neighbors.add(ownership[y + 1][x]);
+        if (neighbors.size < 2) continue;
+        // Draw border on each edge where this unclaimed tile meets an owned tile
+        const kr = x + 1 < W ? ownership[y][x + 1] : -1;
+        const kb = y + 1 < H ? ownership[y + 1][x] : -1;
+        const kl = x > 0 ? ownership[y][x - 1] : -1;
+        const kt = y > 0 ? ownership[y - 1][x] : -1;
+        if (kr >= 0) {
+          const color = KINGDOM_COLORS[kr % KINGDOM_COLORS.length];
+          borderSegments.push({ x0: (x + 1) * TILE_SIZE, y0: y * TILE_SIZE, x1: (x + 1) * TILE_SIZE, y1: (y + 1) * TILE_SIZE, color });
+        }
+        if (kb >= 0) {
+          const color = KINGDOM_COLORS[kb % KINGDOM_COLORS.length];
+          borderSegments.push({ x0: x * TILE_SIZE, y0: (y + 1) * TILE_SIZE, x1: (x + 1) * TILE_SIZE, y1: (y + 1) * TILE_SIZE, color });
+        }
+        if (kl >= 0) {
+          const color = KINGDOM_COLORS[kl % KINGDOM_COLORS.length];
+          borderSegments.push({ x0: x * TILE_SIZE, y0: y * TILE_SIZE, x1: x * TILE_SIZE, y1: (y + 1) * TILE_SIZE, color });
+        }
+        if (kt >= 0) {
+          const color = KINGDOM_COLORS[kt % KINGDOM_COLORS.length];
+          borderSegments.push({ x0: x * TILE_SIZE, y0: y * TILE_SIZE, x1: (x + 1) * TILE_SIZE, y1: y * TILE_SIZE, color });
+        }
+      }
+    }
+
+    console.log(`[borders] ${borderSegments.length} total segments (with unclaimed gaps)`);
+
     // Draw black outline pass (one beginPath for all segments)
     const borderGfx = this.add.graphics();
     borderGfx.setDepth(8);
