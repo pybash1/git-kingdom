@@ -49,5 +49,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Non-fatal — user can still use the app
   }
 
-  res.redirect(302, '/');
+  // Redirect to /<username> so the app skips the title screen and goes straight to the map.
+  // The boot() function in main.ts detects the route and auto-joins the user's repos.
+  const redirectPath = login ? `/${encodeURIComponent(login)}` : '/';
+  res.redirect(302, redirectPath);
 }
