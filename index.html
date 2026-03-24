@@ -1154,7 +1154,7 @@
           var el = document.getElementById('entry-citizens');
           if (!el) return;
           var names = data.citizens.slice(0, 5).map(function(c) {
-            return '<a href="/citizen/' + c.login + '">' + c.login + '</a>';
+            return '<a href="/' + c.login + '">' + c.login + '</a>';
           });
           // Pad total to at least 200 so it doesn't look dead at launch
           var total = Math.max(data.total || 0, 200);
