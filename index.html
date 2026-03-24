@@ -1240,13 +1240,16 @@
       if (av) { av.style.display = 'none'; av.src = ''; }
     });
 
-    // Prevent clicks on overlay panels from reaching the Phaser canvas underneath
+    // Block Phaser from processing clicks that land on DOM overlay panels.
+    // Phaser listens on the canvas directly so stopPropagation doesn't help.
+    // Instead, set a global timestamp — Phaser checks this and ignores clicks
+    // that happened within 100ms of a panel interaction.
+    window.__panelClickTime = 0;
     ['info-panel', 'sheet-panel', 'profile-panel'].forEach(function(id) {
       var panel = document.getElementById(id);
       if (panel) {
-        panel.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
-        panel.addEventListener('pointerup', function(e) { e.stopPropagation(); });
-        panel.addEventListener('click', function(e) { e.stopPropagation(); });
+        panel.addEventListener('pointerdown', function() { window.__panelClickTime = Date.now(); }, true);
+        panel.addEventListener('pointerup', function() { window.__panelClickTime = Date.now(); }, true);
       }
     });
 

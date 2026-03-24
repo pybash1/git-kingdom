@@ -540,9 +540,12 @@ export class CityScene extends Phaser.Scene {
         }
       });
       let spriteClicked = false;
+      // Check if a DOM panel just handled this click (within 100ms)
+      const panelAteClick = () => Date.now() - ((window as any).__panelClickTime || 0) < 100;
       this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
         if (isDragging) { isDragging = false; return; }
         if (spriteClicked) { spriteClicked = false; return; }
+        if (panelAteClick()) return;
         const wp = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
         const tx = Math.floor(wp.x / TILE_SIZE);
         const ty = Math.floor(wp.y / TILE_SIZE);
@@ -663,6 +666,7 @@ export class CityScene extends Phaser.Scene {
       sprite.on('pointerover', () => this.showHoverTooltip(i));
       sprite.on('pointerout', () => this.hideHoverTooltip());
       sprite.on('pointerup', () => {
+        if (panelAteClick()) { spriteClicked = true; return; }
         this.showBuildingInfo(b);
         spriteClicked = true;
       });
