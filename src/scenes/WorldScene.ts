@@ -5,7 +5,7 @@ import { generateWorld, WorldData, WorldKingdom, WorldSettlement } from '../gene
 import { trackCityEntered, trackPageView } from '../analytics';
 
 // Stepped zoom levels for crisp pixel-art rendering (retro style)
-const WORLD_ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+const WORLD_ZOOM_LEVELS = [0.15, 0.2, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
 
 // Track zoom by index to avoid float comparison issues
 let worldZoomIndex = 3; // start at 1x
@@ -401,7 +401,7 @@ export class WorldScene extends Phaser.Scene {
     // Determine zoom first so we can size bounds to match
     const fitZoomX = window.innerWidth / mapW;
     const fitZoomY = window.innerHeight / mapH;
-    const fitZoom = Math.max(0.25, Math.min(fitZoomX, fitZoomY) * 0.9);
+    const fitZoom = Math.max(0.15, Math.min(fitZoomX, fitZoomY) * 0.9);
     worldZoomIndex = nearestZoomIndex(fitZoom);
     const actualZoom = WORLD_ZOOM_LEVELS[worldZoomIndex];
     this.cameras.main.setZoom(actualZoom);
