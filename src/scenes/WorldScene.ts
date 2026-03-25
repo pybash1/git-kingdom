@@ -474,7 +474,7 @@ export class WorldScene extends Phaser.Scene {
       S: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S, false),
       D: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D, false),
     };
-    // Don't capture cursor keys either to allow text navigation
+    // Don't capture arrow keys or SPACE to allow text navigation
     this.input.keyboard!.removeCapture('UP,DOWN,LEFT,RIGHT,SPACE');
 
     this.input.on('wheel', (_p: any, _g: any, _dx: number, deltaY: number) => {
