@@ -327,31 +327,39 @@ export class WorldScene extends Phaser.Scene {
 
     console.log(`[borders] ${borderSegments.length} total segments (with unclaimed gaps)`);
 
-    // Draw black outline pass (one beginPath for all segments)
-    const borderGfx = this.add.graphics();
-    borderGfx.setDepth(8);
-    borderGfx.lineStyle(5, 0x000000, 0.7);
-    borderGfx.beginPath();
-    for (const s of borderSegments) {
-      borderGfx.moveTo(s.x0, s.y0);
-      borderGfx.lineTo(s.x1, s.y1);
-    }
-    borderGfx.strokePath();
+    // Draw borders in chunked batches — Phaser/WebGL can fail silently
+    // with too many segments in a single Graphics path
+    const BATCH_SIZE = 500;
+    for (let i = 0; i < borderSegments.length; i += BATCH_SIZE) {
+      const batch = borderSegments.slice(i, i + BATCH_SIZE);
+      const gfx = this.add.graphics();
+      gfx.setDepth(8);
 
-    // Draw colored pass — group by color for fewer style switches
-    const byColor = new Map<number, typeof borderSegments>();
-    for (const s of borderSegments) {
-      if (!byColor.has(s.color)) byColor.set(s.color, []);
-      byColor.get(s.color)!.push(s);
-    }
-    for (const [color, segs] of byColor) {
-      borderGfx.lineStyle(2.5, color, 1.0);
-      borderGfx.beginPath();
-      for (const s of segs) {
-        borderGfx.moveTo(s.x0, s.y0);
-        borderGfx.lineTo(s.x1, s.y1);
+      // Black outline
+      gfx.lineStyle(4, 0x000000, 0.6);
+      gfx.beginPath();
+      for (const s of batch) {
+        gfx.moveTo(s.x0, s.y0);
+        gfx.lineTo(s.x1, s.y1);
       }
-      borderGfx.strokePath();
+      gfx.strokePath();
+
+      // Colored line on top
+      // Group by color within this batch
+      const byColor = new Map<number, typeof batch>();
+      for (const s of batch) {
+        if (!byColor.has(s.color)) byColor.set(s.color, []);
+        byColor.get(s.color)!.push(s);
+      }
+      for (const [color, segs] of byColor) {
+        gfx.lineStyle(2, color, 1.0);
+        gfx.beginPath();
+        for (const s of segs) {
+          gfx.moveTo(s.x0, s.y0);
+          gfx.lineTo(s.x1, s.y1);
+        }
+        gfx.strokePath();
+      }
     }
 
     // ── City labels with dark RPG banner for name only ──
