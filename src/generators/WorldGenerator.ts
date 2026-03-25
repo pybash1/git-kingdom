@@ -349,8 +349,7 @@ function placeAndGrowKingdoms(
       if (tileCounts[k.index] >= targetTiles[k.index]) continue;
       if (queues[k.index].length === 0) continue;
 
-      // Grow proportionally but cap batch size so small kingdoms aren't starved
-      const batch = Math.max(1, Math.min(5, Math.ceil(targetTiles[k.index] / 50)));
+      const batch = Math.max(1, Math.ceil(targetTiles[k.index] / 50));
       for (let b = 0; b < batch && queues[k.index].length > 0; b++) {
         const [fx, fy] = queues[k.index].shift()!;
 
