@@ -777,8 +777,8 @@ export function generateWorld(languageKingdoms: LanguageKingdom[]): WorldData {
     // Territory scales with total repo count (each repo "contributes" space)
     const repoArea = lk.repos.length * 80;
     const tierArea = settlementArea[cityTier];
-    // Ensure every kingdom is at least a visible island (3000 tiles min)
-    const MIN_KINGDOM_AREA = 3000;
+    // Ensure every kingdom is at least visible but don't inflate tiny kingdoms
+    const MIN_KINGDOM_AREA = 800;
 
     return {
       index: i,
