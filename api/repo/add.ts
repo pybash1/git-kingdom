@@ -5,7 +5,7 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createServiceClient } from '../lib/supabase';
-import { fetchRepoMetrics } from '../lib/github-server';
+import { fetchRepoMetrics, metricsToRepoRow } from '../lib/github-server';
 import { checkMinuteLimit, checkDailyLimit } from '../lib/rate-limit';
 import { getNextToken } from '../lib/github-tokens';
 import { verifyTurnstile } from '../lib/turnstile';
@@ -101,28 +101,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 7. Upsert repo
-    const { data: repoRow, error: repoErr } = await service.from('repos').upsert({
-      full_name: metrics.repo.full_name.toLowerCase(),
-      name: metrics.repo.name,
-      owner_login: metrics.repo.owner?.login || parsed.owner,
-      owner_avatar: metrics.repo.owner?.avatar_url || '',
-      description: metrics.repo.description,
-      language: metrics.repo.language,
-      stargazers: metrics.repo.stargazers_count,
-      forks: metrics.repo.forks_count,
-      open_issues: metrics.repo.open_issues_count,
-      size_kb: metrics.repo.size || 0,
-      created_at: metrics.repo.created_at,
-      pushed_at: metrics.repo.pushed_at || metrics.repo.updated_at,
-      topics: metrics.repo.topics || [],
-      total_commits: metrics.totalCommits,
-      merged_prs: Math.floor(metrics.totalCommits * 0.3),
-      king_login: metrics.king?.login || null,
-      king_avatar: metrics.king?.avatar_url || null,
-      king_contributions: metrics.king?.contributions || 0,
-      fetched_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'full_name' }).select('id').single();
+    const { data: repoRow, error: repoErr } = await service.from('repos').upsert(
+      metricsToRepoRow(metrics, parsed.owner),
+      { onConflict: 'full_name' }
+    ).select('id').single();
 
     if (repoErr || !repoRow) {
       console.warn(`[add] Failed to upsert ${fullName}:`, repoErr?.message);

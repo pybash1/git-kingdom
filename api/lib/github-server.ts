@@ -211,3 +211,29 @@ export async function fetchAllRepoMetrics(
 
   return results;
 }
+
+/** Convert KingdomMetrics to a Supabase repos table row */
+export function metricsToRepoRow(m: KingdomMetrics, fallbackOwner?: string, fallbackAvatar?: string) {
+  return {
+    full_name: m.repo.full_name.toLowerCase(),
+    name: m.repo.name,
+    owner_login: m.repo.owner?.login || fallbackOwner || '',
+    owner_avatar: m.repo.owner?.avatar_url || fallbackAvatar || '',
+    description: m.repo.description,
+    language: m.repo.language,
+    stargazers: m.repo.stargazers_count,
+    forks: m.repo.forks_count,
+    open_issues: m.repo.open_issues_count,
+    size_kb: m.repo.size || 0,
+    created_at: m.repo.created_at,
+    pushed_at: m.repo.pushed_at || m.repo.updated_at,
+    topics: m.repo.topics || [],
+    total_commits: m.totalCommits,
+    merged_prs: Math.floor(m.totalCommits * 0.3),
+    king_login: m.king?.login || null,
+    king_avatar: m.king?.avatar_url || null,
+    king_contributions: m.king?.contributions || 0,
+    fetched_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}

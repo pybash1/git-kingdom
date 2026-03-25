@@ -50,34 +50,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to fetch citizens' });
     }
 
-    // For each user, get their top 3 repos by stars
-    const citizens = await Promise.all(
-      (users || []).map(async (u) => {
-        const { data: userRepos } = await supabase
-          .from('user_repos')
-          .select('repos(full_name, name, language, stargazers)')
-          .eq('user_id', u.id)
-          .limit(10);
+    // Fetch repos for all users in one query (avoids N+1)
+    const userIds = (users || []).map(u => u.id);
+    const { data: allUserRepos } = await supabase
+      .from('user_repos')
+      .select('user_id, repos(full_name, name, language, stargazers)')
+      .in('user_id', userIds);
 
-        const topRepos = (userRepos || [])
-          .map((ur: any) => ur.repos)
-          .filter((r: any) => r && r.stargazers >= 1)
-          .sort((a: any, b: any) => b.stargazers - a.stargazers)
-          .slice(0, 3)
-          .map((r: any) => ({
-            full_name: r.full_name,
-            name: r.name,
-            language: r.language,
-            stars: r.stargazers,
-          }));
+    // Group repos by user
+    const reposByUser = new Map<string, any[]>();
+    for (const ur of (allUserRepos || [])) {
+      if (!ur.repos || ur.repos.stargazers < 1) continue;
+      const list = reposByUser.get(ur.user_id) || [];
+      list.push(ur.repos);
+      reposByUser.set(ur.user_id, list);
+    }
 
-        return {
-          login: u.login,
-          avatar_url: u.avatar_url,
-          top_repos: topRepos,
-        };
-      }),
-    );
+    const citizens = (users || []).map(u => {
+      const userRepos = (reposByUser.get(u.id) || [])
+        .sort((a: any, b: any) => b.stargazers - a.stargazers)
+        .slice(0, 3)
+        .map((r: any) => ({
+          full_name: r.full_name,
+          name: r.name,
+          language: r.language,
+          stars: r.stargazers,
+        }));
+
+      return {
+        login: u.login,
+        avatar_url: u.avatar_url,
+        top_repos: userRepos,
+      };
+    });
 
     // Cache for 5 minutes
     res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');

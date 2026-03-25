@@ -5,7 +5,7 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createServerClient, createServiceClient } from '../lib/supabase';
-import { fetchUserReposAsMetrics } from '../lib/github-server';
+import { fetchUserReposAsMetrics, metricsToRepoRow } from '../lib/github-server';
 import { getNextToken } from '../lib/github-tokens';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -44,28 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log(`[join] ${login}: found ${metrics.length} repos`);
 
     // Batch all DB operations instead of sequential per-repo
-    const repoRows = metrics.map(m => ({
-      full_name: m.repo.full_name.toLowerCase(),
-      name: m.repo.name,
-      owner_login: m.repo.owner?.login || login,
-      owner_avatar: m.repo.owner?.avatar_url || meta.avatar_url,
-      description: m.repo.description,
-      language: m.repo.language,
-      stargazers: m.repo.stargazers_count,
-      forks: m.repo.forks_count,
-      open_issues: m.repo.open_issues_count,
-      size_kb: m.repo.size || 0,
-      created_at: m.repo.created_at,
-      pushed_at: m.repo.pushed_at || m.repo.updated_at,
-      topics: m.repo.topics || [],
-      total_commits: m.totalCommits,
-      merged_prs: Math.floor(m.totalCommits * 0.3),
-      king_login: m.king?.login || null,
-      king_avatar: m.king?.avatar_url || null,
-      king_contributions: m.king?.contributions || 0,
-      fetched_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }));
+    const repoRows = metrics.map(m => metricsToRepoRow(m, login, meta.avatar_url));
 
     // 1. Batch upsert all repos (one DB call)
     const { data: upsertedRepos, error: repoErr } = await service.from('repos')

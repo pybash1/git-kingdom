@@ -75,11 +75,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // GitHub API quota
     let githubQuota = null;
     try {
-      const healthRes = await fetch(`https://${req.headers.host}/api/health`);
-      if (healthRes.ok) {
-        const health = await healthRes.json();
-        githubQuota = health.checks?.github;
-      }
+      const { getAllTokens } = await import('../lib/github-tokens');
+      const tokens = getAllTokens();
+      const quotas = await Promise.all(
+        tokens.map(async (token: string, i: number) => {
+          const ghRes = await fetch('https://api.github.com/rate_limit', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!ghRes.ok) return { token: i + 1, ok: false };
+          const data = await ghRes.json();
+          const core = data.resources?.core;
+          return { token: i + 1, ok: true, remaining: core?.remaining, limit: core?.limit };
+        }),
+      );
+      githubQuota = { ok: quotas.every((q: any) => q.ok), tokens: quotas };
     } catch { /* non-critical */ }
 
     // Group repos by fetched_at date to show "batches" (each join creates a batch)
